@@ -1,27 +1,35 @@
 // Modules to control application life and create native browser window
-const {app, BrowserWindow} = require('electron');
+const { app, BrowserWindow } = require('electron');
 
-const browserMode = true;
+app.disableHardwareAcceleration();
 
-function createWindow () {
+const browserMode = false;
+
+function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width : 400,
+    width: 400,
     height: 500,
+    icon: 'Front-end/resources/roxy.png',
     backgroundColor: '#2c3338',
     webPreferences: {
       nodeIntegration: !browserMode,
-	    contextIsolation: false
+      contextIsolation: false
     },
     frame: false
   })
 
+  //mainWindow.setMaximumSize(800, 1000);
+  mainWindow.setMinimumSize(350, 450);
+
   // and load the index.html of the app.
-  mainWindow.loadFile('C:/Users/mpr19/Desktop/Kieruzele/KieruzeleClient/front-end/signin.html')
+  mainWindow.loadFile('./Front-end/signin.html')
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()
 }
+
+
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

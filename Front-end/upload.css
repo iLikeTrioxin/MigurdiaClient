@@ -1,0 +1,193 @@
+@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,600);
+
+.clickable:hover  { cursor: pointer; }
+
+body  { background-color: #192025; }
+.hide { display: none; }
+
+/**/
+
+body {
+  background-color: #272727;
+  padding: 10px;
+}
+
+#terminal {
+  background-color: #151515;
+  box-sizing: border-box;
+  
+  width : 100%;
+  height: 15%;
+
+  margin: 0 auto;
+  
+  padding-left: 15px;
+  padding-top: 5px;
+  
+  margin-top: 75px;
+  
+  border-radius: 5px;
+  
+  overflow: hidden;
+  
+  font-family: monospace;
+}
+
+#terminal p span { font-weight: bold; }
+span {
+  color: #fff;
+}
+
+.line { color: #fff; }
+.cursor { animation: blink 1s 0s infinite; }
+
+@keyframes blink {
+  0%   { opacity: 0; }
+  40%  { opacity: 0; }
+  50%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/**/
+
+#chooseFile span{ position:relative; top:10px; color: #ddd }
+#chooseFile {
+  color:#fff;
+  text-align: center;
+  margin-top: 50px;
+}
+
+#referenceFile { margin-top: 20px; }
+#referenceFile input{
+  background-color: #242d33;
+  border : 0;
+  outline: 0;
+  text-align: center;
+  width: 16rem;
+  height: 1.5rem;
+  color: #aaa;
+}
+
+#uploadFile {
+  position: relative;
+  
+  width : 150px;
+  height: 2rem;
+  
+  margin: auto;
+
+  border: 2px solid #aaa;
+}
+
+#uploadFile label {
+  display: block;
+
+  padding: 0.3rem 0;
+  color: #ddd;
+  font-family: 'Open Sans', sans-serif;
+  font-size  : 1rem;
+  
+  text-transform: uppercase;
+}
+
+#uploadFile input {
+  position: absolute;
+  z-index: -1;
+  
+  width : 100%;
+  height: 100%;
+  
+  top : 0;
+  left: 0;
+  
+  opacity: 0;
+}
+
+@keyframes scaleUp{
+  from { top:    0%; left:    0%; transform: scale(1.00); }
+  to   { top: -0.5%; left: -0.5%; transform: scale(1.05); }
+}
+
+@keyframes scaleUpReverse{
+  from { top: -0.5%; left: -0.5%; transform: scale(1.05); }
+  to   { top:    0%; left:    0%; transform: scale(1.00); }
+}
+
+#homeIcon{
+  position: relative;
+  
+  float: left;
+  
+  height: 80%;
+  
+  left: 1rem;
+  top : 5px;
+}
+
+#userMenu{
+  transition: height 1s;
+  position: fixed;
+  z-index : 3;
+  
+  width : 30vh;
+  
+  right:  0px;
+  top  : 45px;
+  
+  border    : 2px solid #393f46;
+  border-top: none;
+  
+  background-color: #21282dfa;
+}
+
+#userMenu a{
+  display: block;
+  width: 100%;
+  margin-left: 5px;
+  font-family: 'Open Sans', sans-serif;
+  color: #e3e7ef;
+  
+  margin-top   : 5px;
+  margin-bottom: 5px;
+}
+
+#userMenu img{
+  position: relative;
+  top: 5px;
+  height: 20px;
+}
+
+#userMenu p{
+  margin: 0;
+  
+  width : 100%;
+  height:  2px;
+  
+  background-color: #393f46;
+}
+
+#userIcon{
+  position: relative;
+
+  height : 75%;
+  border-radius: 50%;
+  float: right;
+  
+  top  : 5px;
+  right: 1vw;
+}
+
+
+#menuBar{
+  position: fixed;
+  z-index : 2;
+  
+  width : 100%;
+  height: 50px;
+  
+  top: 0px;
+  left: 0px;
+  background-color: #20272cfa;
+  transition: top 0.3s;
+}

@@ -13,15 +13,13 @@ function onSubmit(){
 	password = sjcl.hash.sha256.hash(password);
 
 	// append "data" with data nececery to be sent to web api
-	let data = "";
+	let data = "method=signin";
 
-	data += "connectionpurpose=signin";
-	data += "&username="    + username;
-	data += "&password="    + password;
+	data += "&username=" + username;
+	data += "&password=" + password;
 	
-	let response = post("https://idkmanmaybesome.000webhostapp.com/test.php", data);
-	console.log(response);
-	response = JSON.parse(response);
+	let response = callAPI(data);
+
 	if(response['success']){
 		localStorage.setItem("username", username);
 		localStorage.setItem("password", password);
@@ -31,15 +29,14 @@ function onSubmit(){
 
 		window.location.href = "./explore.html";
 	}else{
-
-		switch(response['opcode']){
-			case 1:
-				passwordField.classList.add("field_error");
-				error("Unable to sign in. Please check your password and try again.", 3000);
-				break;
-			case 2:
+		switch(response['errorCode']){
+			case 8:
 				usernameField.classList.add("field_error");
 				error("User with such email/username does not exists.", 3000);
+				break;
+			case 5:
+				passwordField.classList.add("field_error");
+				error("Unable to sign in. Please check your password and try again.", 3000);
 				break;
 			default:
 				error("Something went wrong :/ try again later.", 3000);
@@ -54,7 +51,7 @@ function onSubmit(){
 document.getElementById("signin_form").onsubmit = onSubmit;
 
 //fetch(
-//"https://idkmanmaybesome.000webhostapp.com/test.php",
+//"https://migurdia.000webhostapp.com/test.php",
 //{
 //	method : "POST",
 //	body : JSON.stringify({

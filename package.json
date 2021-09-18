@@ -1,16 +1,25 @@
 {
-  "name": "KieruzeleClient",
-  "productName": "KieruzeleClient",
-  "description": "My Electron application description",
+  "name": "MigurdiaClient",
+  "productName": "MigurdiaClient",
+  "description": "Migurdia client",
   "keywords": [],
-  "main": "./main.js",
-  "version": "1.0.0",
-  "author": "mpr19",
-  "scripts": {
-    "start": "electron ."
-  },
-  "dependencies": {},
-  "devDependencies": {
-    "electron": "11.1.1"
+  "main": "main.js",
+  "version": "1.1.2",
+  "author": "iLikeTrioxin",
+  "scripts": { "start": "electron ." },
+  "dependencies": {
+    "electron": "^11.4.12",
+    "imagesloaded": "^4.1.4",
+    "jimp": "^0.16.1",
+    "jquery": "^3.6.0",
+    "masonry-layout": "^4.2.2",
+    "moxie": "^0.0.0",
+    "node-fetch": "^2.6.1",
+    "plupload": "^2.3.7",
+    "read-blob": "^1.1.2",
+    "sharp": "^0.29.0",
+    "sjcl": "^1.0.8",
+    "tslib": "^2.3.1",
+    "video-snapshot": "^1.0.11"
   }
 }

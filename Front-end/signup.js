@@ -14,36 +14,32 @@ function onSubmit(event){
 	// Hash password for seciurity
 	password = sjcl.hash.sha256.hash(password);
 	
-	let data = '';
+	let data = 'method=signup';
 
-	data  = "connectionpurpose=signup";
-	data += "&username=" + username   ;
-	data += "&email="    + email      ;
-	data += "&password=" + password   ;
+	data += "&username=" + username;
+	data += "&email="    + email   ;
+	data += "&password=" + password;
 
-	let response = post("https://idkmanmaybesome.000webhostapp.com/test.php", data);
-	
-	response = JSON.parse(response);
+	let response = callAPI(data);
 	
 	if(response['success']){
 		localStorage.setItem('username', username);
 		localStorage.setItem('password', password);
 
-		window.location.href = "./explore.html";
+		window.location.href = "//migurdia.ddns.net/explore";
 	}else{
-
-		switch(response['opcode']){
-			case 1:
-				emailField.classList.add("field_error");
-				error("Sorry, that email is considered not valid.", 3000);
-				break;
-			case 2:
+		switch(response['errorCode']){
+			case 4:
 				usernameField.classList.add("field_error");
 				error("Sorry, user with that username already exists.", 3000);
 				break;
 			case 3:
 				emailField.classList.add("field_error");
 				error("Sorry, user with that email already exists.", 3000);
+				break;
+			case 2:
+				emailField.classList.add("field_error");
+				error("Sorry, that email is considered invalid.", 3000);
 				break;
 			default:
 				error("Sorry, something went wrong. Try again later. :/", 3000);
