@@ -1,6 +1,6 @@
 
 function callAPI(data, retry=true){
-	const apiURL = "https://incognitoo.pl/temp/API.php?";
+	const apiURL = "//migurdia.yukiteru.xyz/API.php?";
 	let response;
 	
 	response = post(apiURL, data);
