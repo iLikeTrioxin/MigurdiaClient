@@ -10,7 +10,7 @@ function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 400,
     height: 500,
-    icon: 'Front-end/resources/roxy.png',
+    icon: 'front-end/resources/roxy.png',
     backgroundColor: '#2c3338',
     webPreferences: {
       nodeIntegration: !browserMode,
@@ -23,7 +23,7 @@ function createWindow() {
   mainWindow.setMinimumSize(350, 450);
 
   // and load the index.html of the app.
-  mainWindow.loadFile('./Front-end/signin.html')
+  mainWindow.loadFile('./front-end/signin.html')
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()
