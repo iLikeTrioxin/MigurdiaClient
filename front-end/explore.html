@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+
+<html lang="en" >
+
+<head>
+    <script>if(localStorage['username']==null||localStorage['password']==null){window.location.href="./signin.html";}</script>
+    
+    <title>Migurdia</title>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="preconnect" href="http://fonts.gstatic.com">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css2?family=Open+Sans:wght@300&display=swap">
+    <link rel="stylesheet" href="./explore.css">
+</head>
+
+<body>
+    <div id="content">
+        <div id="menuBar">
+            <img id="uploadIcon" class="clickable" src="./resources/save-arrow.png" style="transform: rotate(180deg);">
+            <img id="userIcon"   class="clickable" src="./resources/RussianLoli.png" >
+            <div id="userMenu"   class="hide">
+                <a id="myAccount" class="clickable">
+                    <img src="./resources/id-card.png">
+                    My account
+                </a>
+
+                <a id="settings"  class="clickable">
+                    <img src="./resources/gear.png">
+                    Settings
+                </a>
+                
+                <p></p>
+                
+                <a id="signout" class="clickable">
+                    <img src="./resources/exit-door.png">
+                    Sign out
+                </a>
+            </div>
+            <!--img class="topArrow" src="./resources/arrow.png"-->
+        </div>
+        <div class="gallery" id="gallery">
+            <!--Images will apear here-->
+        </div>
+    </div>
+    
+    <script src="../utils.js" ></script>
+    <script src="./explore.js"></script>
+</body>    
+
+<!--<script>document.querySelector('a[title]').parentNode.remove();</script>-->
+
+</html>

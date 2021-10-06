@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+
+<html lang="en" >
+
+<head>
+    <script>if(localStorage['username']==null||localStorage['password']==null){window.location.href="//migurdia.ddns.net/signin";}</script>
+    <title>Migurdia</title>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="stylesheet" href="./upload.css">
+</head>
+
+<body>
+    <div id="fileUploadDummy" style="position: absolute;width: 0;height: 0;display: none;"></div>
+    <div id="content">
+        <div id="menuBar">
+            <img id="homeIcon" class="clickable" src="./resources/roxy.png">
+            <img id="userIcon" class="clickable" src="./resources/RussianLoli.png" >
+            <div id="userMenu" class="hide">
+                <a id="myAccount" class="clickable">
+                    <img src="resources/id-card.png">
+                    My account
+                </a>
+
+                <a id="settings"  class="clickable">
+                    <img src="./resources/gear.png">
+                    Settings
+                </a>
+                
+                <p></p>
+                
+                <a id="signout" class="clickable">
+                    <img src="./resources/exit-door.png">
+                    Sign out
+                </a>
+            </div>
+        </div>
+
+        <div id="terminal">
+            <div id="terminalContent">
+            </div>
+            
+            <p class="line">><span class="cursor">_</span></p>
+        </div>
+
+        <div id="chooseFile">
+            <div id="uploadFile">
+                <label class="clickable" for="file">Upload file</label>
+
+                <input id="file" type="file">
+            </div>
+
+            <span> OR </span>
+            
+            <div id="referenceFile">
+                <input id="fileURL" type="text" placeholder="PASTE URL">
+            </div>
+        </div>
+
+    </div>
+    <script
+        src="https://code.jquery.com/jquery-3.6.0.js"
+        integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk="
+        crossorigin="anonymous">
+    </script>
+    
+    <script src="https://unpkg.com/imagesloaded@4/imagesloaded.pkgd.min.js"></script>
+    
+    <script src="../utils.js" ></script>
+    <script src="./upload.js" ></script>
+</body>    
+
+<!--<script>document.querySelector('a[title]').parentNode.remove();</script>-->
+
+</html>
