@@ -1,6 +1,7 @@
 const fetch = require('node-fetch');
-const apiURL = "http://migurdia.yukiteru.xyz/API.php?";
+const apiURL = "https://migurdia.yukiteru.xyz/API.php?";
 
+let sessionID = null;
 // 
 // toDo: postAsync does not send post data.
 //
@@ -38,15 +39,25 @@ function callAPI(data, retry=true){
 async function postAsync(url, data=null){
 	return new Promise((resolve, reject) => {
 		var request = new XMLHttpRequest();
-
+		
+		request.open('POST', url, true);
+		
+		request.withCredentials = true;
+		
+		request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+		request.setRequestHeader('SameSite', 'None');
+		
 		request.addEventListener('readystatechange', () => {
 			if(request.readyState !=   4) return;
 			if(request.status     != 200) reject({ "ok": 0, "txt": ""});
 			
-			resolve({ "ok": 1, "txt": request.responseText});
+			resolve({
+				ok     : 1,
+				txt    : request.responseText,
+				headers: request.getAllResponseHeaders()
+			});
 		});
-
-		request.open('POST', url, true);
+		
 		request.send(data);
 	})
 }
@@ -78,20 +89,26 @@ function login(username=null, password=null){
 		password = localStorage['password'];
 	}
 
-	return postAsync(
-		apiURL, {
-			"method"  : "signin",
-			"username": username,
-			"password": password
-		}
-	).then(res => {
+	return postAsync( apiURL, `method=signin&username=${username}&password=${password}` ).then(res => {
 		if(!res.ok) return false;
 
 		response = JSON.parse(res.txt);
 
-		if(response['errorCode'] == 0) return response;
+		//if(response['errorCode'] == 0) return response;
+		let arr = res.headers.trim().split(/[\r\n]+/);
+		
+		var headerMap = {};
+		arr.forEach(function (line) {
+			var parts = line.split(': ');
+			var header = parts.shift();
+			var value = parts.join(': ');
+			headerMap[header] = value;
+		});
+		
+		console.log(headerMap);
+		sessionID = headerMap['PHPSESSID'];
 
-		return false;
+		return response;
 	})
 }
 

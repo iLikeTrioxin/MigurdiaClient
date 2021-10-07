@@ -1,8 +1,6 @@
 // Modules to control application life and create native browser window
 const { app, BrowserWindow } = require('electron');
 
-app.disableHardwareAcceleration();
-
 const browserMode = false;
 
 function createWindow() {
