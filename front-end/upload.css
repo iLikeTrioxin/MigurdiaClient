@@ -41,14 +41,6 @@ span {
 .line { color: #fff; }
 .cursor { animation: blink 1s 0s infinite; }
 
-@keyframes blink {
-  0%   { opacity: 0; }
-  40%  { opacity: 0; }
-  50%  { opacity: 1; }
-  90%  { opacity: 1; }
-  100% { opacity: 0; }
-}
-
 /**/
 
 #chooseFile span{ position:relative; top:10px; color: #ddd }
@@ -81,6 +73,17 @@ span {
 }
 
 #uploadFile label {
+  display: block;
+
+  padding: 0.3rem 0;
+  color: #ddd;
+  font-family: 'Open Sans', sans-serif;
+  font-size  : 1rem;
+  
+  text-transform: uppercase;
+}
+
+.submit label {
   display: block;
 
   padding: 0.3rem 0;

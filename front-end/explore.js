@@ -1,8 +1,8 @@
 window.$ = window.jQuery = require('jquery');
 
 const imagesLoaded = require('imagesloaded');
-const fetch = require('node-fetch');
-const Masonry = require('masonry-layout');
+const Masonry      = require('masonry-layout');
+const { parseSize } = require('plupload');
 
 function getFiles(wantedTags=[], unwantedTags=[]){
     let tags = {};
@@ -12,13 +12,11 @@ function getFiles(wantedTags=[], unwantedTags=[]){
     
     let data = JSON.stringify(tags);
 
-    let response = callAPI(`method=getFiles&tags=${data}`);
-    
-    if( response['success'] ){
-        return response['result'];
-    }
-
-    return 0;
+    return callAPIAS(`method=getFiles&tags=${data}`).then((res)=>{
+        if( res['exitCode'] == 0 ) return res['result'];
+        
+        return false;
+    });
 }
 
 var masonryGallery = new Masonry(
@@ -61,15 +59,7 @@ function scrolledDown(){
 }
 
 function processPixivImage(URL){
-	return fetch(
-		URL,
-		{
-			"method": "GET",
-			"headers":{
-				"referer": "https://www.pixiv.net/"
-			}
-		}
-	).then(res => res.buffer()).then(res => {console.log("done");});
+	return postAsync(URL, "referer=https://www.pixiv.net/");
 	//.then(res => {
 	//	let dataType = res.headers.get("content-type");
 	//	console.log("loaded 1");
@@ -99,19 +89,20 @@ function scrolledToTheBottom(){
 	
     let posts = [];
 
-    let r = getFiles();
-    for(let i =0; i < r.length; i++){
-        let re = processFileURL("https:"+r[i]['URL']);
-		if (re != false) posts.push(re);
-    }
-	
-	Promise.all(posts).then(posts =>{
-		$(loadingImages).imagesLoaded().done(function(){
-			masonryGallery.layout();
-			loadingImages = [];
-			loading = false;
-		});
-	});
+    getFiles().then((res)=>{
+        for(let i =0; i < res.length; i++){
+            let re = processFileURL("https:"+res[i]['URL']);
+            if (re != false) posts.push(re);
+        }
+
+        Promise.all(posts).then(() =>{
+            $(loadingImages).imagesLoaded().done(() => {
+                masonryGallery.layout();
+                loadingImages = [];
+                loading = false;
+            });
+        });
+    });
 }
 
 var previousYPos = (window.innerHeight + window.scrollY);
@@ -161,20 +152,12 @@ function signout(moveToSignin){
     localStorage.removeItem('password'      );
     localStorage.removeItem('preventSignout');
 
-    callAPI('method=signout', false);
-	
-    if (moveToSignin) window.location.href = './signin.html';
-}
-
-function onCloseCallback(event){
-    if(localStorage['preventSignout'] == 'true')
-        return;
-    
-    signout(false);
+    callAPIAS('method=signout', false).then( () => {
+        moveToSignin ? (window.location.href = './signin.html') : null;
+    });
 }
 
 window.addEventListener('click'       ,   clickCallback);
 window.addEventListener('scroll'      ,  scrollCallback);
-window.addEventListener('beforeunload', onCloseCallback);
 
 scrolledToTheBottom();

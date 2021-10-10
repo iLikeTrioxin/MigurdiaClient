@@ -1,14 +1,10 @@
-const fetch = require('node-fetch');
 const apiURL = "https://migurdia.yukiteru.xyz/API.php?";
-
-let sessionID = null;
-// 
-// toDo: postAsync does not send post data.
-//
 
 function callAPI(data, retry=true){
 	let response = post(apiURL, data);
 	
+	console.error("Using outdated function 'callAPI' which works in sync mode.");
+
 	response = JSON.parse(response);
 	
 	// if response is arbitrary session expired error(1) then repeat connection once
@@ -16,8 +12,6 @@ function callAPI(data, retry=true){
 		console.log("retrying.");
 		
 		if(!localStorage['username'] || !localStorage['password']) return response;
-		
-		console.log("logging...");
 		
 		let signInData = "method=signin";
 
@@ -27,8 +21,6 @@ function callAPI(data, retry=true){
 		post(apiURL, signInData);
 		
 		response = post(apiURL, data);
-		
-		console.log(response);
 		
 		response = JSON.parse(response);
 	}
@@ -42,14 +34,15 @@ async function postAsync(url, data=null){
 		
 		request.open('POST', url, true);
 		
-		request.withCredentials = true;
-		
 		request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-		request.setRequestHeader('SameSite', 'None');
+		
+		// Send SID by post becouse xmlhttprequest refuses to set unsafe header cookie
+		if(localStorage['SID'] != undefined)
+			data += "&Cookie=PHPSESSID=" + localStorage['SID'];
 		
 		request.addEventListener('readystatechange', () => {
 			if(request.readyState !=   4) return;
-			if(request.status     != 200) reject({ "ok": 0, "txt": ""});
+			if(request.status     != 200) reject({ ok: 0, txt: ""});
 			
 			resolve({
 				ok     : 1,
@@ -69,13 +62,11 @@ function callAPIAS(data, retry=true){
 		
 		let response = JSON.parse(res.txt); 
 
-		if(response['errorCode'] == 7 && retry) return login().then(res => {
-			if(res == false) return false;
+		if(response['exitCode'] == 7 && retry) return login().then(res => {
+			if(res === false) return false;
 
 			return callAPIAS(data, false);
 		});
-
-		if(response['errorCode'] != 0) return false;
 
 		return response;
 	});
@@ -94,19 +85,12 @@ function login(username=null, password=null){
 
 		response = JSON.parse(res.txt);
 
-		//if(response['errorCode'] == 0) return response;
-		let arr = res.headers.trim().split(/[\r\n]+/);
-		
-		var headerMap = {};
-		arr.forEach(function (line) {
-			var parts = line.split(': ');
-			var header = parts.shift();
-			var value = parts.join(': ');
-			headerMap[header] = value;
-		});
-		
-		console.log(headerMap);
-		sessionID = headerMap['PHPSESSID'];
+		if(response['exitCode'] == 0){
+			localStorage.setItem("username", username);
+			localStorage.setItem("password", password);
+
+			localStorage.setItem('SID', response['result']['SID']);
+		}
 
 		return response;
 	})
@@ -132,7 +116,7 @@ function error(msg, ms){
 	setTimeout(function(a, b){a.classList.add(b)}, ms, errorMsg, "hide");
 }
 
-function post(url, data, callback){
+function post(url, data){
 	let xhr = new window.XMLHttpRequest;
 	xhr.open("POST", url, false);
 	

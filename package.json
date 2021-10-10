@@ -18,7 +18,7 @@
     "node-fetch": "^2.6.1",
     "plupload": "^2.3.7",
     "read-blob": "^1.1.2",
-    "sharp": "^0.29.0",
+    "sharp": "^0.29.1",
     "sjcl": "^1.0.8",
     "tslib": "^2.3.1",
     "video-snapshot": "^1.0.11"

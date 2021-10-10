@@ -1,10 +1,14 @@
-plupload = require('plupload');
-const fs       = require('fs'      );
+const plupload        = require('plupload'      );
+const fs              = require('fs'            );
+const sharp           = require('sharp'         );
+const VideoSnapshoter = require('video-snapshot').default;
+
+const preferedThumbnailPixelArea = 512 * 512;
+const fileBlackHoleAPI = 'https://fileblackhole.000webhostapp.com/API.php';
 
 class FileBlackHole{
-	fileBlackHoleAPI = 'https://fileblackhole.000webhostapp.com/API.php';
 	uploader = new plupload.Uploader({
-	  url          : `${this.fileBlackHoleAPI}?method=uploadfilechunk`,
+	  url          : fileBlackHoleAPI,
 	  runtimes     : 'html5,html4',
 	  browse_button: 'fileUploadDummy',
 	  container    : 'fileUploadDummy',
@@ -26,13 +30,18 @@ class FileBlackHole{
 	static init(){ new   FileBlackHole(); }
   
 	uploadFiles(files, chunkUploaded, FileUploaded){
-	  let resp = post(`${this.fileBlackHoleAPI}?method=createsession`);
+	  let resp = postt(`${fileBlackHoleAPI}?method=createsession`, "");
+		  resp = JSON.parse(resp);
+	
+	  SID = resp['Result']['SID'];
+	  
+	  this.uploader.setOption('url', `${fileBlackHoleAPI}?method=uploadfilechunk&PHPSESSID=${SID}`)
 	  
 	  for(let i=0; i < files.length; i++){
 	  	let file = files[i];
   
 		this.uploader.addFile(file);
-		post(`${this.fileBlackHoleAPI}?method=startupload&fileSize=${file.size}&fileName=${file.name}`);
+		postt(`${fileBlackHoleAPI}?method=startupload&fileSize=${file.size}&fileName=${file.name}`, "");
 	  }
 	  
 	  this.uploader.bind('ChunkUploaded', chunkUploaded);
@@ -58,11 +67,6 @@ function addFile(event){
   URLs.appendChild(newFile);
   fileURL.focus();
 }
-
-// video/image processing libs
-const sharp           = require('sharp');
-const VideoSnapshoter = require('video-snapshot').default;
-const preferedThumbnailPixelArea = 512 * 512;
 
 // this function returns File instance
 async function getImageThumbnail(file){
@@ -91,14 +95,14 @@ async function getVideoThumbnail(file){
 	let snapshoter = new VideoSnapshoter(file);
 	let snapshot   = await snapshoter.takeSnapshot();
 	    snapshot   = snapshot.substring(22);
-		snapshot   = Buffer.from(snapshot);
+		snapshot   = Buffer.from(snapshot, 'base64');
 	
 	return getImageThumbnail(snapshot);
 }
 
 async function getThumbnail(file){
-	if(file.type.indexOf("image") == 0) return await getImageThumbnail(file.path);
-	if(file.type.indexOf("video") == 0) return await getVideoThumbnail(file     );
+	if(file.type.indexOf("image") != -1) return await getImageThumbnail(file.path);
+	if(file.type.indexOf("video") != -1) return await getVideoThumbnail(file     );
 
 	return null;
 }
@@ -107,7 +111,7 @@ function addTerminalLine(ID, content){
 	let line = document.createElement('p');
 	
 	line.classList.add('line');
-
+	
 	line.id        = ID     ;
 	line.innerHTML = content;
 
@@ -159,64 +163,21 @@ https://i.pximg.net/img-original/img/2019/11/10/00/09/06/77734346_p0.jpg
 */
 
 let SID = null;
-function post(url, data = null){
-	var xhr = new window.XMLHttpRequest;
-	xhr.open("POST", url, false);
+function postt(url, data = null){
+	var request = new XMLHttpRequest();
+		
+	request.open('POST', url, false);
 	
-	//Send the proper header information along with the request
-	//xhr.onreadystatechange = function() {
-	//	//Call a function when the state changes.
-	//	if(xhr.readyState == 4 && xhr.status == 200) {
-	//		alert(xhr.responseText);
-	//	}
-	//}
-	//if ( SID != null ) xhr.setRequestHeader('PHPSESSID', SID);
-
-	xhr.send();
+	request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
 	
-	if(xhr.readyState != 4 && xhr.status != 200)
-		return xhr.status;
+	// Send SID by post becouse xmlhttprequest refuses to set unsafe header cookie
+	if(SID != null)
+		data += "&PHPSESSID=" + SID;
 	
-	return xhr.responseText;
+	request.send(data);
+	
+	if(request.readyState !=   4) return;
+	if(request.status     != 200) return;
+	
+	return request.responseText;
 }
-
-/*
-// Custom example logic
-var uploader = new plupload.Uploader({
-	runtimes : 'html5,html4',
-	browse_button : 'pickfiles', // you can pass an id...
-	container: document.getElementById('container'), // ... or DOM Element itself
-	url : 'API.php?method=uploadfilechunk',
-	chunk_size: '1mb',
-
-	init: {
-		FilesAdded: function(up, files) {
-			plupload.each(files, function(file) {
-				document.getElementById('filelist').innerHTML += '<div id="' + file.id + '">' + file.name + ' (' + plupload.formatSize(file.size) + ') <b></b></div>';
-				
-			});
-		},
-
-		UploadProgress: function(up, file) {
-			document.getElementById(file.id).getElementsByTagName('b')[0].innerHTML = '<span>' + file.percent + "%</span>";
-		},
-
-		Error: function(up, err) {
-			document.getElementById('console').appendChild(document.createTextNode("\nError #" + err.code + ": " + err.message));
-		},
-
-		//https://www.plupload.com/docs/v2/Uploader#FileUploaded-event
-		//
-		//uploader plupload.Uploader - Uploader instance sending the event.
-		//file plupload.File - File that was uploaded.
-		//result:
-		//    -response - The response body sent by the server.
-		//    -status   - The HTTP status code sent by the server.
-		//    -responseHeaders - All the response headers as a single string.
-		FileUploaded: function(uploader, file, result){
-			console.log(result.response);
-		}
-
-	}
-});
-*/

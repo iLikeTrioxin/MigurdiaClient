@@ -1,3 +1,5 @@
+const sjcl = require('sjcl');
+
 function onSubmit(){
 	let usernameField = document.getElementById("login__username");
 	let passwordField = document.getElementById("login__password");
@@ -13,23 +15,14 @@ function onSubmit(){
 	password = sjcl.hash.sha256.hash(password);
 
 	// append "data" with data nececery to be sent to web api
-	let data = "method=signin";
-
-	data += "&username=" + username;
-	data += "&password=" + password;
+	login(username, password).then((response)=>{
+		switch( (response === false) ? 3 : response['exitCode'] ){
+			case 0:
+				if (document.getElementById('keepSignedin').checked)
+					localStorage.setItem('preventSignout', true);
 	
-	let response = callAPI(data);
-
-	if(response['success']){
-		localStorage.setItem("username", username);
-		localStorage.setItem("password", password);
-		
-		if (document.getElementById('keepSignedin').checked)
-			localStorage.setItem('preventSignout', true);
-
-		window.location.href = "./explore.html";
-	}else{
-		switch(response['errorCode']){
+				window.location.href = "./explore.html";
+				break;
 			case 1:
 				usernameField.classList.add("field_error");
 				error("User with such email/username does not exists.", 3000);
@@ -42,8 +35,7 @@ function onSubmit(){
 				error("Something went wrong :/ try again later.", 3000);
 				break;
 		}
-		
-	}
+	})
 
 	return false;
 }
