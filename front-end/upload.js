@@ -72,7 +72,8 @@ function addFile(event){
 async function getImageThumbnail(file){
 	let image    = sharp(file).jpeg();
 	let metadata = await image.metadata();
-	let name     = `${parseInt(Math.random() * 0xFFFFFFFF)}.thumbnail.jpg`;
+	let name     = file.name.split('.')[0]
+	    name     = `${name}.thumbnail.jpg`;
 
 	
 	let pixelArea   = metadata.width * metadata.height;
@@ -122,6 +123,7 @@ function changeTerminalLine(ID, newContent){
 	document.getElementById(ID).innerHTML = newContent;
 }
 
+let urlsToSubmit = [];
 async function postFile(){
   let file = document.getElementById('file').files[0];
   document.getElementById('chooseFile').classList.add('hide');
@@ -134,21 +136,32 @@ async function postFile(){
   FileBlackHole.get().uploadFiles(
 	Array(file,thumbnail),
 	function(up, file, result){ changeTerminalLine(`${file.name}UploadProgress`, `${file.name} - ${result.offset / result.total}%`); },
-	function(up, file, result){ changeTerminalLine(`${file.name}UploadProgress`, `${file.name} - completed (${result.response})`  ); }
+	function(up, file, result){ changeTerminalLine(`${file.name}UploadProgress`, `${file.name} - completed (${result.response})`  ); urlsToSubmit.push(result.response); }
   );
 }
 
-function postURL(){
+function postURL() {
   let fileURL = document.getElementById('fileURL');
   document.getElementById('chooseFile').classList.add('hide');
 
 }
 
+function submitURL(){
+	urlPairs = {};
+	
+	urlsToSubmit.forEach(url => {
+		if(url.indexOf("thumbnail") != -1) urlPairs[url] = null;
+	});
+
+	urlsToSubmit.forEach(url => {
+		if(url.indexOf("thumbnail") != -1) urlPairs[url] = null;
+	});
+}
 
 
-document.getElementById('file'     ).addEventListener('change', postFile);
-document.getElementById('fileURL'  ).addEventListener('change', postURL);
-//document.getElementById('submit').addEventListener('click', addURLs);
+document.getElementById('file'        ).addEventListener('change', postFile);
+document.getElementById('fileURL'     ).addEventListener('change', postURL);
+document.getElementById('submitButton').addEventListener('click' , submitURL);
 
 /*
 

@@ -12,6 +12,10 @@ body {
   padding: 10px;
 }
 
+#submitButton{
+  text-align: center;margin-top: 10px;
+}
+
 #terminal {
   background-color: #151515;
   box-sizing: border-box;
@@ -43,9 +47,8 @@ span {
 
 /**/
 
-#chooseFile span{ position:relative; top:10px; color: #ddd }
+#chooseFile span{ position:relative; top:10px; color: #ddd; }
 #chooseFile {
-  color:#fff;
   text-align: center;
   margin-top: 50px;
 }
