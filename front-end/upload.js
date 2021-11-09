@@ -136,7 +136,7 @@ async function postFile(){
   FileBlackHole.get().uploadFiles(
 	Array(file,thumbnail),
 	function(up, file, result){ changeTerminalLine(`${file.name}UploadProgress`, `${file.name} - ${result.offset / result.total}%`); },
-	function(up, file, result){ changeTerminalLine(`${file.name}UploadProgress`, `${file.name} - completed (${result.response})`  ); urlsToSubmit.push(result.response); }
+	function(up, file, result){ changeTerminalLine(`${file.name}UploadProgress`, `${file.name} - completed (${result.response})`  ); urlsToSubmit.push({'url':`https://fileblackhole.000webhostapp.com/files/${result.response}`,'name':file.name}); }
   );
 }
 
@@ -150,7 +150,7 @@ function submitURL(){
 	urlPairs = {};
 	
 	urlsToSubmit.forEach(url => {
-		if(url.indexOf("thumbnail") != -1) urlPairs[url] = null;
+		if(url['name'].indexOf("thumbnail") != -1) urlPairs[url] = null;
 	});
 
 	urlsToSubmit.forEach(url => {
