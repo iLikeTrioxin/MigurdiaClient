@@ -16,21 +16,10 @@ function onSubmit(event){
 	// Hash password for seciurity
 	password = sjcl.hash.sha256.hash(password);
 	
-	let data = 'method=signup';
-
-	data += "&username=" + username;
-	data += "&email="    + email   ;
-	data += "&password=" + password;
-
-	let response = callAPI(data);
-	
-	if(response['success']){
-		localStorage.setItem('username', username);
-		localStorage.setItem('password', password);
-
-		window.location.href = "./explore.html";
-	}else{
-		switch(response['errorCode']){
+	signup(username, email, password).then( (res) => {
+		switch( (res === false) ? 10 : res["errorCode"] ){
+			case 0:
+				window.location.href = "./explore.html";
 			case 5:
 				usernameField.classList.add("field_error");
 				error("Sorry, user with that username already exists.", 3000);
@@ -47,9 +36,8 @@ function onSubmit(event){
 				error("Sorry, something went wrong. Try again later. :/", 3000);
 				break;
 		}
-
-	}
-
+	});
+	
 	return false;
 }
 

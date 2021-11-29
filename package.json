@@ -10,6 +10,7 @@
     "start": "electron ."
   },
   "dependencies": {
+    "@yaireo/tagify": "^4.9.2",
     "imagesloaded": "^4.1.4",
     "jimp": "^0.16.1",
     "jquery": "^3.6.0",

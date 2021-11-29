@@ -1,31 +1,30 @@
+const fetch  = require("node-fetch");
 const apiURL = "https://migurdia.yukiteru.xyz/API.php?";
 
-function callAPI(data, retry=true){
-	let response = post(apiURL, data);
-	
-	console.error("Using outdated function 'callAPI' which works in sync mode.");
+//-------------------
+//  Pixiv handling 
+//-------------------
 
-	response = JSON.parse(response);
-	
-	// if response is arbitrary session expired error(1) then repeat connection once
-	if(response["errorCode"] == 1 && retry){
-		console.log("retrying.");
-		
-		if(!localStorage['username'] || !localStorage['password']) return response;
-		
-		let signInData = "method=signin";
+// A lot of posts are sourced from pixiv, and so it happens
+// pixiv do not allow you to freely embed their images on your site
+// so here is code that can download those images by adding some unsafe headers
 
-		signInData += `&username=${localStorage['username']}`;
-		signInData += `&password=${localStorage['password']}`;
-		
-		post(apiURL, signInData);
-		
-		response = post(apiURL, data);
-		
-		response = JSON.parse(response);
-	}
-	
-	return response;
+// returns nodejs Buffer object
+async function getPixivImage(url){
+	return fetch(url, {
+		method : "GET",
+		headers: {
+			"referer": "https://www.pixiv.net/"
+		}
+	}).then( res => res.arrayBuffer() ).then( res => Buffer.from(res) );
+}
+
+// returns Buffer object, another url or dosn't do anything
+async function getRealSource(url) {
+	if (url.indexOf('i.pximg.net') != -1)
+		return processPixivImage(url);
+	else
+	    return new Promise( (r) => r(url) );
 }
 
 async function postAsync(url, data=null){
@@ -55,14 +54,14 @@ async function postAsync(url, data=null){
 	})
 }
 
-function callAPIAS(data, retry=true){
+async function callAPIAS(data, retry=true){
 	return postAsync( apiURL, data ).then(res => {
 		// if fetch wasn't ok it in not API fault, so dont continue
 		if(!res.ok) return false;
 		
 		let response = JSON.parse(res.txt); 
 
-		if(response['exitCode'] == 7 && retry) return login().then(res => {
+		if(response['exitCode'] == 7 && retry) return signin().then(res => {
 			if(res === false) return false;
 
 			return callAPIAS(data, false);
@@ -70,30 +69,6 @@ function callAPIAS(data, retry=true){
 
 		return response;
 	});
-}
-
-function login(username=null, password=null){
-	if(username == null || password == null){
-		if(!localStorage['username'] || !localStorage['password']) return new Promise( (r) => r(false) );
-		
-		username = localStorage['username'];
-		password = localStorage['password'];
-	}
-
-	return postAsync( apiURL, `method=signin&username=${username}&password=${password}` ).then(res => {
-		if(!res.ok) return false;
-
-		response = JSON.parse(res.txt);
-
-		if(response['exitCode'] == 0){
-			localStorage.setItem("username", username);
-			localStorage.setItem("password", password);
-
-			localStorage.setItem('SID', response['result']['SID']);
-		}
-
-		return response;
-	})
 }
 
 function error(msg, ms){
@@ -136,4 +111,73 @@ function post(url, data){
 		return xhr.status;
 	
 	return xhr.responseText;
+}
+
+// TODO: make signin and signup use callApi function instead of just post
+
+async function signup(username, email, password){
+	return postAsync( apiURL, `method=signup&username=${username}&email=${email}&password=${password}` ).then( (res) => {
+		if(!res.ok) return false;
+
+		response = JSON.parse(res.txt);
+
+		if(response['exitCode'] == 0){
+			localStorage.setItem("username", username);
+			localStorage.setItem("password", password);
+			localStorage.setItem("email"   , email   );
+
+			localStorage.setItem('SID', response['result']['SID']);
+		}
+
+		return response;
+	})
+}
+
+async function signin(username=null, password=null){
+	if(username == null || password == null){
+		if(!localStorage['username'] || !localStorage['password']) return new Promise( (r) => r(false) );
+		
+		username = localStorage['username'];
+		password = localStorage['password'];
+	}
+
+	return postAsync( apiURL, `method=signin&username=${username}&password=${password}` ).then( (res) => {
+		if(!res.ok) return false;
+
+		response = JSON.parse(res.txt);
+
+		if(response['exitCode'] == 0){
+			localStorage.setItem("username", username);
+			localStorage.setItem("password", password);
+
+			localStorage.setItem('SID', response['result']['SID']);
+		}
+
+		return response;
+	})
+}
+
+async function signout(moveToSignin=true){
+    localStorage.removeItem('username'      );
+    localStorage.removeItem('password'      );
+    localStorage.removeItem('preventSignout');
+
+    return callAPIAS('method=signout', false).then( () => {
+        moveToSignin ? (window.location.href = './signin.html') : null;
+    });
+}
+
+async function getFiles(amount=20, wantedTags=[], unwantedTags=[]){
+    let tags = {};
+
+    if ( unwantedTags != [] ) tags['unwanted'] = unwantedTags;
+    if (   wantedTags != [] ) tags[  'wanted'] =   wantedTags;
+    
+    let data = JSON.stringify(tags);
+
+    return callAPIAS(`method=getFiles&tags=${data}&amount=${amount}`).then( (res) =>{
+        if( res['exitCode'] == 0 ) return res['result'];
+        
+        return false;
+    });
 }

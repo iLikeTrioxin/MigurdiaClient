@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 
 <html lang="en" >
-
 <head>
     <script>if(localStorage['username']==null||localStorage['password']==null){window.location.href="./signin.html";}</script>
     <title>Migurdia</title>
@@ -60,11 +59,22 @@
             </div>
         </div>
         
-        
-        <div id="submitButton">
-            <span>Submit</span>
+        <div id="postDetails" class="hide">
+            <input id="postName" type="text" placeholder="post name">
+            
+            <input id="postAuthors" name='tags-regular' placeholder='authors here'>
+            
+            <input id="postDescription" type="text" placeholder="post description">
+
+            <input id="postTags" name='tags-regular' placeholder='tags here'>
+
+            
         </div>
 
+        <div id="submitButton" class="clickable hide">
+            <span>Submit</span>
+        </div>
+        
     </div>
     <script
         src="https://code.jquery.com/jquery-3.6.0.js"
