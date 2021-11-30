@@ -16,52 +16,40 @@ async function getPixivImage(url){
 		headers: {
 			"referer": "https://www.pixiv.net/"
 		}
-	}).then( res => res.arrayBuffer() ).then( res => Buffer.from(res) );
+	});
 }
 
 // returns Buffer object, another url or dosn't do anything
 async function getRealSource(url) {
 	if (url.indexOf('i.pximg.net') != -1)
-		return processPixivImage(url);
+		return processPixivImage(url).then( res => res.arrayBuffer() ).then( res => Buffer.from(res) );
 	else
 	    return new Promise( (r) => r(url) );
 }
 
-async function postAsync(url, data=null){
-	return new Promise((resolve, reject) => {
-		var request = new XMLHttpRequest();
-		
-		request.open('POST', url, true);
-		
-		request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-		
-		// Send SID by post becouse xmlhttprequest refuses to set unsafe header cookie
-		if(localStorage['SID'] != undefined)
-			data += "&Cookie=PHPSESSID=" + localStorage['SID'];
-		
-		request.addEventListener('readystatechange', () => {
-			if(request.readyState !=   4) return;
-			if(request.status     != 200) reject({ ok: 0, txt: ""});
-			
-			resolve({
-				ok     : 1,
-				txt    : request.responseText,
-				headers: request.getAllResponseHeaders()
-			});
-		});
-		
-		request.send(data);
-	})
+async function getBlob(url){
+    if (url.indexOf('i.pximg.net') != -1)
+		return processPixivImage(url).then( res => res.blob() );
+	else
+	    return fetch(url, {}).then( res => res.blob() );
+}
+
+// return json
+async function postAsync(url, data=""){
+    return fetch(url, {
+        'method' : 'POST',
+        'body'   : data,
+        'headers': {
+            'accept': '*/*',
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'cookie': `PHPSESSID=${localStorage['SID']}`
+        }
+    });
 }
 
 async function callAPIAS(data, retry=true){
-	return postAsync( apiURL, data ).then(res => {
-		// if fetch wasn't ok it in not API fault, so dont continue
-		if(!res.ok) return false;
-		
-		let response = JSON.parse(res.txt); 
-
-		if(response['exitCode'] == 7 && retry) return signin().then(res => {
+	return postAsync( apiURL, data ).then( res => res.json() ).then( (response) => {
+		if((response['exitCode'] == 7) && (retry == true)) return signin().then( (res) => {
 			if(res === false) return false;
 
 			return callAPIAS(data, false);
@@ -116,11 +104,7 @@ function post(url, data){
 // TODO: make signin and signup use callApi function instead of just post
 
 async function signup(username, email, password){
-	return postAsync( apiURL, `method=signup&username=${username}&email=${email}&password=${password}` ).then( (res) => {
-		if(!res.ok) return false;
-
-		response = JSON.parse(res.txt);
-
+	return callAPIAS(`method=signup&username=${username}&email=${email}&password=${password}`, false).then( (response) => {
 		if(response['exitCode'] == 0){
 			localStorage.setItem("username", username);
 			localStorage.setItem("password", password);
@@ -141,11 +125,7 @@ async function signin(username=null, password=null){
 		password = localStorage['password'];
 	}
 
-	return postAsync( apiURL, `method=signin&username=${username}&password=${password}` ).then( (res) => {
-		if(!res.ok) return false;
-
-		response = JSON.parse(res.txt);
-
+	return callAPIAS(`method=signin&username=${username}&password=${password}`, false).then( (response) => {
 		if(response['exitCode'] == 0){
 			localStorage.setItem("username", username);
 			localStorage.setItem("password", password);
@@ -167,7 +147,11 @@ async function signout(moveToSignin=true){
     });
 }
 
-async function getFiles(amount=20, wantedTags=[], unwantedTags=[]){
+async function addPosts(){
+
+}
+
+async function getPosts(amount=20, wantedTags=[], unwantedTags=[]){
     let tags = {};
 
     if ( unwantedTags != [] ) tags['unwanted'] = unwantedTags;
@@ -175,7 +159,7 @@ async function getFiles(amount=20, wantedTags=[], unwantedTags=[]){
     
     let data = JSON.stringify(tags);
 
-    return callAPIAS(`method=getFiles&tags=${data}&amount=${amount}`).then( (res) =>{
+    return callAPIAS(`method=getPosts&tags=${data}&amount=${amount}`).then( (res) =>{
         if( res['exitCode'] == 0 ) return res['result'];
         
         return false;

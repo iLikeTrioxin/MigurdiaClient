@@ -3,7 +3,6 @@ const fs              = require('fs'            );
 const sharp           = require('sharp'         );
 const VideoSnapshoter = require('video-snapshot').default;
 const Tagify          = require('@yaireo/tagify');
-const { tmpdir } = require('os');
 
 const preferedThumbnailPixelArea = 512 * 512;
 const fileBlackHoleAPI = 'https://fileblackhole.000webhostapp.com/API.php';
@@ -31,7 +30,7 @@ class FileBlackHole{
     static get (){ return this._instance; }
     static init(){ new   FileBlackHole(); }
   
-    uploadFiles(files, chunkUploaded, FileUploaded){
+    uploadFiles(files, chunkUploaded, fileUploaded, uploadComplete){
       let resp = postt(`${fileBlackHoleAPI}?method=createsession`, "");
           resp = JSON.parse(resp);
     
@@ -46,8 +45,9 @@ class FileBlackHole{
         postt(`${fileBlackHoleAPI}?method=startupload&fileSize=${file.size}&fileName=${file.name}`, "");
       }
       
-      this.uploader.bind('ChunkUploaded', chunkUploaded);
-      this.uploader.bind( 'FileUploaded',  FileUploaded);
+      this.uploader.bind(  'FileUploaded',   fileUploaded);
+      this.uploader.bind( 'ChunkUploaded',  chunkUploaded);
+      this.uploader.bind('UploadComplete', uploadComplete);
       this.uploader.bind('Error', (up, err) => { console.log(`uploader has thrown error ${err.code} - ${err.message}`); });
 
       this.uploader.start();
@@ -75,8 +75,7 @@ function addFile(event) {
 async function getImageThumbnail(file){
     let image    = sharp(file).jpeg();
     let metadata = await image.metadata();
-    let name     = file.name.split('.')[0]
-        name     = `${name}.thumbnail.jpg`;
+    let name     = getName(file);
 
     
     let pixelArea   = metadata.width * metadata.height;
@@ -104,10 +103,19 @@ async function getVideoThumbnail(file){
     return getImageThumbnail(snapshot);
 }
 
-async function getThumbnail(file){
+async function getFileThumbnail(file){
     if(file.type.indexOf("image") != -1) return await getImageThumbnail(file.path);
-    if(file.type.indexOf("video") != -1) return await getVideoThumbnail(file     );
+    if(file.type.indexOf("video") != -1) return await getVideoThumbnail(file.path);
 
+    return null;
+}
+
+async function getBlobThumbnail(blob){
+    let type = blob.type;
+
+    if(type.indexOf("image") != -1) return await getImageThumbnail(url);
+    if(type.indexOf("video") != -1) return await getVideoThumbnail(url);
+    
     return null;
 }
 
@@ -127,13 +135,22 @@ function changeTerminalLine(ID, newContent){
 }
 
 let filesToUpload = [];
-async function postFile(){
+function postFile(){
     let file = document.getElementById('file').files[0];
 
     filesToUpload.push(file);
 
     document.getElementById('chooseFile' ).classList.add   ("hide");
     document.getElementById('postDetails').classList.remove("hide");
+}
+
+function getName(input){
+    let name = input.split('/');
+        name = name[name.length-1];
+        name = name.split('.')[0];
+        name = `${name}.thumbnail.jpg`;
+    
+    return name;
 }
 
 let urlsToUpload = [];
@@ -146,65 +163,77 @@ function postURL() {
       document.getElementById('postDetails').classList.remove("hide");
 }
 
-function submitURL(){
-    urlsToSubmit = [];
+urlsToSubmit = [];
+let submitProcessing = false;
+async function submit() {
+    if( submitProcessing ) return;
 
+    submitProcessing = true;
+    
     if(urlsToUpload.length != 0) {
         urlsToUpload.forEach( (url) => {
-            let thumbnail = await getThumbnail(getRealSource(url));
-            urlsToSubmit .push(url);
-            filesToUpload.push(thumbnail);
+            getUrlThumbnail(getBlob(url)).then( (thumbnail) => {
+                urlsToSubmit .push(url);
+                filesToUpload.push(thumbnail);
+            });
         });
     }
     
     if(filesToUpload.length != 0) {
+        tmp = [];
         filesToUpload.forEach(file => {
-            let thumbnail = await getThumbnail(file);
-            
-            addTerminalLine(`${file     .name}UploadProgress`, `${file     .name} - upload started.`);
-            addTerminalLine(`${thumbnail.name}UploadProgress`, `${thumbnail.name} - upload started.`);
-            
-            FileBlackHole.get().uploadFiles(
-                Array(file, thumbnail),
-                function(up, file, result){ changeTerminalLine(`${file.name}UploadProgress`, `${file.name} - ${result.offset / result.total}%`); },
-                function(up, file, result){ changeTerminalLine(`${file.name}UploadProgress`, `${file.name} - completed (${result.response})`  ); urlsToSubmit.push({'url':`https://fileblackhole.000webhostapp.com/files/${result.response}`,'name':file.name}); }
-            );
-        })
+            tmp.push(getFileThumbnail(file));
+        });
+        
+        await Promise.all(tmp).then( (thumbnails) => { filesToUpload = filesToUpload.concat(thumbnails); } );
+        
+        filesToUpload.forEach( (file) => addTerminalLine(`${file.name}UploadProgress`, `${file.name} - upload started.`) );
+
+        FileBlackHole.get().uploadFiles(
+            filesToUpload,
+            function(up, file, result){ changeTerminalLine(`${file.name}UploadProgress`, `${file.name} - ${result.offset / result.total}%`); },
+            function(up, file, result){ changeTerminalLine(`${file.name}UploadProgress`, `${file.name} - completed (${result.response})`  ); urlsToSubmit.push(`https://fileblackhole.000webhostapp.com/files/${result.response}`); },
+            function(up, files       ){ submitPosts(); }
+        );
 
         filesToUpload = [];
     }
+}
 
+async function submitPosts(){
     files = {};
     urlsToSubmit.forEach( (url) => {
-        filename = url['name'].split('.')[0];
+        filename = getName(url);
         
         files[filename] = {};
     
-        let isThumbnail = url['name'].indexOf("thumbnail") != -1;
+        let isThumbnail = filename.indexOf("thumbnail") != -1;
         
-        files[filename][isThumbnail ? "thumbnail" : "file"] = url["url"];
+        files[filename][isThumbnail ? "thumbnail" : "file"] = url;
     });
 
+    tags = [];
+    tagsSelector.getCleanValue().forEach( (tag) =>  tags.push(tag['value']))
+    debugger;
     filesToSubmit = [];
     files.forEach( (file) => {
         filesToSubmit.push({
             "thumbnailUrl": files["thumbnailUrl"],
             "fileUrl"     : files["file"],
-            "tags"        : [],
-            "authors"     : [],
+            "tags"        : tags,
             "description" : document.getElementById('postDescription').value,
             "name"        : document.getElementById('postName'       ).value,
         });
     });
 
     filesToSubmit = JSON.stringify(filesToSubmit);
-    callAPIAS(`method=uploadFiles&files=${filesToSubmit}`);
+    callAPIAS(`method=addPosts&posts=${filesToSubmit}`);
+    submitProcessing = false;
 }
-
 
 document.getElementById('file'        ).addEventListener('change', postFile);
 document.getElementById('fileURL'     ).addEventListener('change', postURL);
-document.getElementById('submitButton').addEventListener('click' , submitURL);
+document.getElementById('submitButton').addEventListener('click' , submit);
 
 /*
 
@@ -237,58 +266,25 @@ function postt(url, data = null){
     return request.responseText;
 }
 
-let postTags    = document.querySelector('#postTags'   );
-let postAuthors = document.querySelector('#postAuthors');
-
-// init Tagify script on the above inputs
-tagsSelector = new Tagify(postTags, {
+// init Tagify script on the queried input
+tagsSelector = new Tagify(document.querySelector('#postTags'), {
     enforeWhitelist : true,
-    delimiters      : ",| ;"
-});
-
-authorsSelector = new Tagify(postAuthors, {
-    enforeWhitelist : true,
-    delimiters      : ",| ;"
+    delimiters      : ",|;"
 });
 
 // listen to any keystrokes which modify selector's input
-tagsSelector   .on('input', onTagsSelectorInput   );
-authorsSelector.on('input', onAuthorsSelectorInput);
+tagsSelector.on('input', onTagsSelectorInput);
 
 function onTagsSelectorInput( event ){
     var value = event.detail.value;
     tagsSelector.whitelist = null; // reset the whitelist
     
-    // https://developer.mozilla.org/en-US/docs/Web/API/AbortController/abort
-    controller && controller.abort();
-    controller = new AbortController();
-    
     // show loading animation and hide the suggestions dropdown
     tagsSelector.loading(true).dropdown.hide();
     
-    callAPIAS(`method=getTagProposals&hint=${value}`, {signal:controller.signal})
-      .then(response => response.json())
+    callAPIAS(`method=getTagProposals&hint=${value}`)
       .then( (res) => {
         if(res["errorCode"] == 0) tagsSelector.whitelist = res["result"];
         tagsSelector.loading(false).dropdown.show(value);
-    });
-}
-
-function onAuthorsSelectorInput( event ) {
-    var value = event.detail.value;
-    tagsSelector.whitelist = null; // reset the whitelist
-
-    // https://developer.mozilla.org/en-US/docs/Web/API/AbortController/abort
-    controller && controller.abort();
-    controller = new AbortController();
-  
-    // show loading animation and hide the suggestions dropdown
-    tagsSelector.loading(true).dropdown.hide();
-
-    callAPIAS(`method=getAuthorProposals&hint=${value}`, {signal:controller.signal})
-        .then(response => response.json())
-        .then(function(res){
-            if(res["errorCode"] == 0) tagsSelector.whitelist = res["result"];
-            tagsSelector.loading(false).dropdown.show(value);
     });
 }

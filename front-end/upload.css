@@ -14,13 +14,18 @@ body {
   text-align: center;
 }
 
-#postName{
+#postTags,
+.tagify__input { text-align: left !important; }
+.tagify{margin-top: 2%;}
+
+#postName,
+#postDescription{
   position: relative;
   background-color: #242d33;
   border : 0;
   outline: 0;
   text-align: center;
-  margin: 0 auto;
+  margin: 2% auto;
   width: 16rem;
   height: 1.5rem;
   color: #aaa;
@@ -230,7 +235,7 @@ body {
   background-color: #20272cfa;
   transition: top 0.3s;
 }
-#postTags{ margin-top: 10%; }
+
 
 .tagify{ border-radius: 10px; }
 /* everything below is included from tagify respository on github by yairEO */

@@ -49,7 +49,7 @@ function scrolledToTheBottom(first=false) {
 	
 	loading = true;
 	
-    getFiles(first ? 15 : 30).then( (files) => {
+    getPosts(first ? 15 : 30).then( (files) => {
         let posts = [];
 
         files.forEach( (file ) => {
