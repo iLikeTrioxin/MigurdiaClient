@@ -151,15 +151,15 @@ async function addPosts(){
 
 }
 
-async function getPosts(amount=20, wantedTags=[], unwantedTags=[]){
+async function getPosts(amount=20, wantedTags=[], unwantedTags=[], offset=0){
     let tags = {};
 
     if ( unwantedTags != [] ) tags['unwanted'] = unwantedTags;
     if (   wantedTags != [] ) tags[  'wanted'] =   wantedTags;
     
     let data = JSON.stringify(tags);
-
-    return callAPIAS(`method=getPosts&tags=${data}&amount=${amount}`).then( (res) =>{
+console.log(`method=getPosts&tags=${data}&amount=${amount}&offset=${offset}`);
+    return callAPIAS(`method=getPosts&tags=${data}&amount=${amount}&offset=${offset}`).then( (res) =>{
         if( res['exitCode'] == 0 ) return res['result'];
         
         return false;

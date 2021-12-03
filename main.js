@@ -1,7 +1,7 @@
 const { app, BrowserWindow } = require('electron');
 
 const browserMode = false;
-const   debugMode = true;
+const   debugMode = false;
 
 function createWindow() {
   // Create the browser window.

@@ -15,7 +15,7 @@ function onSubmit(){
 	password = sjcl.hash.sha256.hash(password);
 
 	// append "data" with data nececery to be sent to web api
-	login(username, password).then((response)=>{
+	signin(username, password).then((response)=>{
 		switch( (response === false) ? 3 : response['exitCode'] ){
 			case 0:
 				if (document.getElementById('keepSignedin').checked)

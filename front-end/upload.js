@@ -3,6 +3,8 @@ const fs              = require('fs'            );
 const sharp           = require('sharp'         );
 const VideoSnapshoter = require('video-snapshot').default;
 const Tagify          = require('@yaireo/tagify');
+const { title } = require('process');
+const { parseSize } = require('plupload');
 
 const preferedThumbnailPixelArea = 512 * 512;
 const fileBlackHoleAPI = 'https://fileblackhole.000webhostapp.com/API.php';
@@ -34,7 +36,7 @@ class FileBlackHole{
       let resp = postt(`${fileBlackHoleAPI}?method=createsession`, "");
           resp = JSON.parse(resp);
     
-      SID = resp['Result']['SID'];
+      SID = resp['result']['SID'];
       
       this.uploader.setOption('url', `${fileBlackHoleAPI}?method=uploadfilechunk&PHPSESSID=${SID}`)
       
@@ -72,11 +74,9 @@ function addFile(event) {
 }
 
 // this function returns File instance
-async function getImageThumbnail(file){
+async function getImageThumbnail(file, name){
     let image    = sharp(file).jpeg();
     let metadata = await image.metadata();
-    let name     = getName(file);
-
     
     let pixelArea   = metadata.width * metadata.height;
     let aspectRatio = metadata.width / metadata.height;
@@ -94,6 +94,10 @@ async function getImageThumbnail(file){
     return new File([Buffer.from(await image.toBuffer())], name);
 }
 
+function randomInt(){
+    return parseInt(Math.random() * Number.MAX_SAFE_INTEGER);
+}
+
 async function getVideoThumbnail(file){
     let snapshoter = new VideoSnapshoter(file);
     let snapshot   = await snapshoter.takeSnapshot();
@@ -104,17 +108,15 @@ async function getVideoThumbnail(file){
 }
 
 async function getFileThumbnail(file){
-    if(file.type.indexOf("image") != -1) return await getImageThumbnail(file.path);
-    if(file.type.indexOf("video") != -1) return await getVideoThumbnail(file.path);
+    if(file.type.indexOf("image") != -1) return getImageThumbnail(file.path, `${getName(file.name)}.thumbnail.jpg`);
+    if(file.type.indexOf("video") != -1) return getVideoThumbnail(file.path, `${getName(file.name)}.thumbnail.jpg`);
 
     return null;
 }
 
-async function getBlobThumbnail(blob){
-    let type = blob.type;
-
-    if(type.indexOf("image") != -1) return await getImageThumbnail(url);
-    if(type.indexOf("video") != -1) return await getVideoThumbnail(url);
+async function getBlobThumbnail(blob, url){
+    if(blob.type.indexOf("image") != -1) return blob.arrayBuffer().then( b => Buffer.from(b) ).then( b => getImageThumbnail(b, `${getName(url)}.thumbnail.jpg`) );
+    if(blob.type.indexOf("video") != -1) return blob.arrayBuffer().then( b => Buffer.from(b) ).then( b => getVideoThumbnail(b, `${getName(url)}.thumbnail.jpg`) );
     
     return null;
 }
@@ -145,88 +147,117 @@ function postFile(){
 }
 
 function getName(input){
-    let name = input.split('/');
+    let name = input.split(/[ \\/]/);
         name = name[name.length-1];
         name = name.split('.')[0];
-        name = `${name}.thumbnail.jpg`;
     
     return name;
 }
 
 let urlsToUpload = [];
 function postURL() {
-    let fileURL = document.getElementById('fileURL').value;
+    let fileUrl = document.getElementById('fileURL').value;
 
     urlsToUpload.push(fileUrl);
     
     document.getElementById('chooseFile' ).classList.add   ("hide");
-      document.getElementById('postDetails').classList.remove("hide");
+    document.getElementById('postDetails').classList.remove("hide");
 }
 
 urlsToSubmit = [];
 let submitProcessing = false;
 async function submit() {
     if( submitProcessing ) return;
-
+    debugger;
     submitProcessing = true;
     
+    let thumbnails = [];
     if(urlsToUpload.length != 0) {
+        let promises = [];
+
         urlsToUpload.forEach( (url) => {
-            getUrlThumbnail(getBlob(url)).then( (thumbnail) => {
-                urlsToSubmit .push(url);
-                filesToUpload.push(thumbnail);
-            });
+            promises.push(getBlob(url).then( (blob) => {
+                return getBlobThumbnail(blob, url).then( (thumbnail) => {
+                    urlsToSubmit.push({'url': url, 'name':getName(url)});
+                    thumbnails  .push(thumbnail);
+                });
+            }));
         });
+
+        await Promise.all(promises);
     }
     
     if(filesToUpload.length != 0) {
-        tmp = [];
+        let promises = [];
+
         filesToUpload.forEach(file => {
-            tmp.push(getFileThumbnail(file));
+            promises.push(getFileThumbnail(file).then( (thumbnail) => {
+                thumbnails.push(thumbnail);
+            }));
         });
         
-        await Promise.all(tmp).then( (thumbnails) => { filesToUpload = filesToUpload.concat(thumbnails); } );
-        
-        filesToUpload.forEach( (file) => addTerminalLine(`${file.name}UploadProgress`, `${file.name} - upload started.`) );
-
-        FileBlackHole.get().uploadFiles(
-            filesToUpload,
-            function(up, file, result){ changeTerminalLine(`${file.name}UploadProgress`, `${file.name} - ${result.offset / result.total}%`); },
-            function(up, file, result){ changeTerminalLine(`${file.name}UploadProgress`, `${file.name} - completed (${result.response})`  ); urlsToSubmit.push(`https://fileblackhole.000webhostapp.com/files/${result.response}`); },
-            function(up, files       ){ submitPosts(); }
-        );
-
-        filesToUpload = [];
+        await Promise.all(promises);
     }
+
+    filesToUpload = filesToUpload.concat(thumbnails);
+
+    filesToUpload.forEach( (file) => addTerminalLine(`${file.name}UploadProgress`, `${file.name} - upload started.`) );
+
+    FileBlackHole.get().uploadFiles(
+        filesToUpload,
+        function(up, file, result){ changeTerminalLine(`${file.name}UploadProgress`, `${file.name} - ${floatToPercentage(result.offset / result.total)}%`); },
+        function(up, file, result) {
+            resp = JSON.parse(result.response);
+            if(resp['exitCode'] != 0 || result.status != 200)
+                changeTerminalLine(`${file.name}UploadProgress`, `${file.name} - failed`);
+            
+            changeTerminalLine(`${file.name}UploadProgress`, `${file.name} - completed (${resp['result']})`  );
+            urlsToSubmit.push({'url': `https://fileblackhole.000webhostapp.com/files/${resp['result']}`, 'name':file.name});
+        },
+        function(up, files       ){ submitPosts(); }
+    );
+    filesToUpload = [];
+}
+
+function floatToPercentage(x){
+    return parseInt(100 * x);
 }
 
 async function submitPosts(){
     files = {};
     urlsToSubmit.forEach( (url) => {
-        filename = getName(url);
+        filename = getName(url['name']);
         
-        files[filename] = {};
+        if(files[filename] == undefined) files[filename] = {};
     
-        let isThumbnail = filename.indexOf("thumbnail") != -1;
+        let isThumbnail = url['name'].indexOf("thumbnail") != -1;
         
-        files[filename][isThumbnail ? "thumbnail" : "file"] = url;
+        files[filename][isThumbnail ? "thumbnail" : "file"] = url['url'];
     });
 
     tags = [];
     tagsSelector.getCleanValue().forEach( (tag) =>  tags.push(tag['value']))
-    debugger;
+    
     filesToSubmit = [];
-    files.forEach( (file) => {
+    for(file in files){
+        if(files[file]['file'     ] == undefined) return;
+        if(files[file]['thumbnail'] == undefined) return;
+
+        let postName = document.getElementById('postName').value;
+        if(postName == "") postName = "Untitled";
+
         filesToSubmit.push({
-            "thumbnailUrl": files["thumbnailUrl"],
-            "fileUrl"     : files["file"],
+            "thumbnailUrl": files[file]["thumbnail"],
+            "fileUrl"     : files[file]["file"],
             "tags"        : tags,
             "description" : document.getElementById('postDescription').value,
-            "name"        : document.getElementById('postName'       ).value,
+            "name"        : postName,
         });
-    });
-
+    }
+    
+    
     filesToSubmit = JSON.stringify(filesToSubmit);
+    console.log(`method=addPosts&posts=${filesToSubmit}`);
     callAPIAS(`method=addPosts&posts=${filesToSubmit}`);
     submitProcessing = false;
 }
@@ -284,7 +315,31 @@ function onTagsSelectorInput( event ){
     
     callAPIAS(`method=getTagProposals&hint=${value}`)
       .then( (res) => {
-        if(res["errorCode"] == 0) tagsSelector.whitelist = res["result"];
+        if(res["exitCode"] == 0) tagsSelector.whitelist = res['result'].map( e => e[1] );
         tagsSelector.loading(false).dropdown.show(value);
     });
 }
+
+var callbacks = [];
+function clickCallback(event){
+    callbacks.forEach(function(element){
+        if(element.target != event.target && element.exception != event.target) (element.callback)();
+    });
+}
+
+callbacks.push(
+    {
+        target   : document.getElementById('userMenu'),
+        exception: document.getElementById('userIcon'),
+        callback : function(){
+            document.getElementById('userMenu').classList.add('hide');
+        }
+    }
+);
+
+window.addEventListener('click', clickCallback);
+
+document.getElementById('homeIcon'   ).addEventListener('click', () => { window.location.href = './explore.html' });
+document.getElementById('userIcon'   ).addEventListener('click', function(event) {
+    document.getElementById('userMenu').classList.toggle('hide');
+});

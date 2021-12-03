@@ -43,6 +43,7 @@ function scrolledDown(){
     document.getElementById('userMenu').classList.add('hide');
 }
 
+let seenPosts = [];
 let loading = false;
 function scrolledToTheBottom(first=false) {
 	if(loading) return;
@@ -53,7 +54,9 @@ function scrolledToTheBottom(first=false) {
         let posts = [];
 
         files.forEach( (file ) => {
-            posts.push(addImage(getRealSource(file['thumbnailUrl'])));
+            if(seenPosts.includes(file['id'])) return;
+            seenPosts.push(file['id']);
+            posts.push(getRealSource((file['thumbnailHosting'] ? file['thumbnailHosting'] : "") + file['thumbnailPath']).then( (resp) => addImage(resp) ));
         });
 
         Promise.all(posts).then(() =>{
@@ -93,7 +96,7 @@ function clickCallback(event){
 //document.querySelector('.topArrow').addEventListener('click', function(){window.scrollTo(0, 0);});
 
 document.getElementById('signout'    ).addEventListener('click', function(event) { signout(true); } );
-document.getElementById('uploadIcon' ).addEventListener('click', function(event) { console.log("here"); window.location.href = './upload.html'; } );
+document.getElementById('uploadIcon' ).addEventListener('click', function(event) { window.location.href = './upload.html'; } );
 document.getElementById('userIcon'   ).addEventListener('click', function(event) {
     document.getElementById('userMenu').classList.toggle('hide');
 });

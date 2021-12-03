@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@yaireo/tagify": "^4.9.2",
+    "auto-updater": "^1.0.2",
     "imagesloaded": "^4.1.4",
     "jimp": "^0.16.1",
     "jquery": "^3.6.0",
@@ -26,5 +27,9 @@
   },
   "devDependencies": {
     "electron": "^15.1.1"
+  },
+  "auto-updater": {
+    "repo": "/iLikeTrioxin/MigurdiaClient",
+    "branch": "master"
   }
 }
