@@ -1,10 +1,9 @@
 const plupload        = require('plupload'      );
-const fs              = require('fs'            );
 const sharp           = require('sharp'         );
 const VideoSnapshoter = require('video-snapshot').default;
 const Tagify          = require('@yaireo/tagify');
-const { title } = require('process');
-const { parseSize } = require('plupload');
+
+'use strict';
 
 const preferedThumbnailPixelArea = 512 * 512;
 const fileBlackHoleAPI = 'https://fileblackhole.000webhostapp.com/API.php';
@@ -168,7 +167,7 @@ urlsToSubmit = [];
 let submitProcessing = false;
 async function submit() {
     if( submitProcessing ) return;
-    debugger;
+    
     submitProcessing = true;
     
     let thumbnails = [];
@@ -280,7 +279,7 @@ https://i.pximg.net/img-original/img/2019/11/10/00/09/06/77734346_p0.jpg
 
 let SID = null;
 function postt(url, data = null){
-    var request = new XMLHttpRequest();
+    let request = new XMLHttpRequest();
     
     request.open('POST', url, false);
 
@@ -307,7 +306,7 @@ tagsSelector = new Tagify(document.querySelector('#postTags'), {
 tagsSelector.on('input', onTagsSelectorInput);
 
 function onTagsSelectorInput( event ){
-    var value = event.detail.value;
+    let value = event.detail.value;
     tagsSelector.whitelist = null; // reset the whitelist
     
     // show loading animation and hide the suggestions dropdown
@@ -322,7 +321,7 @@ function onTagsSelectorInput( event ){
 
 var callbacks = [];
 function clickCallback(event){
-    callbacks.forEach(function(element){
+    callbacks.forEach( (element) => {
         if(element.target != event.target && element.exception != event.target) (element.callback)();
     });
 }
@@ -331,7 +330,7 @@ callbacks.push(
     {
         target   : document.getElementById('userMenu'),
         exception: document.getElementById('userIcon'),
-        callback : function(){
+        callback : () => {
             document.getElementById('userMenu').classList.add('hide');
         }
     }
@@ -339,7 +338,8 @@ callbacks.push(
 
 window.addEventListener('click', clickCallback);
 
-document.getElementById('homeIcon'   ).addEventListener('click', () => { window.location.href = './explore.html' });
-document.getElementById('userIcon'   ).addEventListener('click', function(event) {
+document.getElementById('homeIcon'   ).addEventListener('click', (event) => { window.location.href = './explore.html' });
+document.getElementById('signout'    ).addEventListener('click', (event) => { signout(true); } );
+document.getElementById('userIcon'   ).addEventListener('click', (event) => {
     document.getElementById('userMenu').classList.toggle('hide');
 });

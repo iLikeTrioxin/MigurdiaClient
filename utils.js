@@ -1,6 +1,8 @@
 const fetch  = require("node-fetch");
 const apiURL = "https://migurdia.yukiteru.xyz/API.php?";
 
+'use strict';
+
 //-------------------
 //  Pixiv handling 
 //-------------------
@@ -146,6 +148,133 @@ async function signout(moveToSignin=true){
         moveToSignin ? (window.location.href = './signin.html') : null;
     });
 }
+
+
+var __lastScrollX__ = 0;
+var __lastScrollY__ = 0;
+
+var __noScroll__ = () => { window.scrollTo(__lastScrollX__, __lastScrollY__); };
+
+function lockScroll(){
+    __lastScrollX__ = window.scrollX;
+    __lastScrollY__ = window.scrollY;
+    window.addEventListener('scroll', __noScroll__);
+}
+
+function unlockScroll(){
+    window.removeEventListener('scroll', __noScroll__);
+}
+
+function lockScreen(){
+    let div = document.createElement("div");
+    div.id = "__lockScreen__";
+    div.style = "z-index:5;position:fixed;top:0;left:0;width:100vw;height:100vh;background-color:black;opacity:75%;";
+    document.querySelector('html').appendChild(div);
+}
+
+function unlockScreen(){
+    let lock = document.getElementById('__lockScreen__');
+    
+    if(lock != undefined) lock.remove();
+}
+
+function removeProgressWindow(){
+    document.getElementById('__currentProgressWindow__').remove();
+}
+
+function setProgressWindowProgress(perc = 0, stage = ''){
+    let progressBar = document.getElementById('__currentProgressBar__');
+
+    progressBar.style.width = perc + '%';
+
+    if(stage != '') document.getElementById('__currentStage__').innerHTML = stage;
+
+    if(perc == 0)
+        document.getElementById('__currentProgress__').style.display = "none";
+    else
+        document.getElementById('__currentProgress__').style.display = "block";
+}
+
+function addProgressWindow(title, stage) {
+    lockScreen();
+    lockScroll();
+
+    let progressWindow = document.createElement("div");
+    progressWindow.id    = "__currentProgressWindow__";
+    progressWindow.style = "z-index:10;position:fixed;text-align:center;width:65vw;height:50vh;top:50%;left:50%;transform:translate(-50%,-50%);background-color:#222;";
+
+    let windowTitle = document.createElement("h1");
+    windowTitle.style     = "margin-top:5%;font-size:2rem;position:relative;color:rgb(255,255,255);font-weight:bold;text-transform:uppercase;";
+    windowTitle.innerHTML = title;
+
+    let windowStage = document.createElement("h2");
+    windowStage.style     = "margin-top:10%;font-size:1rem;margin-bottom:10%;position:relative;color:rgb(255,255,255);font-weight:bold;text-transform:uppercase;";
+    windowStage.id        = "__currentStage__";
+    windowStage.innerHTML = stage;
+    
+    let progress = document.createElement("div");
+    progress.style = "width:80%;margin:0 auto;background-color:grey;";
+    progress.id    = "__currentProgress__";
+
+    let progressBar = document.createElement("div");
+    progressBar.style = "width:0%;height:30px;background-color:green;";
+    progressBar.id    = "__currentProgressBar__";
+
+    progress.appendChild(progressBar);
+
+    progressWindow.append(windowTitle, windowStage, progress);
+
+    document.querySelector('html').appendChild(progressWindow);
+
+}
+
+function askUser(title, question, yesCallback, noCallback){
+    lockScreen();
+    lockScroll();
+
+    let questionWindow = document.createElement("div");
+    questionWindow.id = "__currentQuestion__";
+    questionWindow.style = "z-index:10;position:fixed;text-align:center;width:65vw;height:50vh;top:50%;left:50%;transform:translate(-50%,-50%);background-color:#222;";
+
+    let windowTitle = document.createElement("h1");
+    windowTitle.style = "margin-top:5%;font-size:2rem;position:relative;color:rgb(255,255,255);font-weight:bold;text-transform:uppercase;";
+    windowTitle.innerHTML = title;
+
+    let windowQuestion = document.createElement("h2");
+    windowQuestion.style = "margin-top:10%;font-size:1rem;margin-bottom:10%;position:relative;color:rgb(255,255,255);font-weight:bold;text-transform:uppercase;";
+    windowQuestion.innerHTML = question;
+
+
+    let yesButton = document.createElement("a");
+    yesButton.style     = "cursor:pointer;margin:5%;padding:2% 5%;border:2px solid white;border-radius:5px;position:relative;color:rgb(255,255,255);font-weight:bold;text-transform:uppercase;";
+    yesButton.innerHTML = "Yes";
+
+    yesButton.addEventListener('click', ()  => { unlockScreen(); unlockScroll(); document.getElementById('__currentQuestion__').remove(); });
+    yesButton.addEventListener('click', yesCallback);
+
+    let noButton = document.createElement("a");
+    noButton.style     = "cursor:pointer;margin:5%;padding:2% 5%;border:2px solid white;border-radius:5px;position:relative;color:rgb(255,255,255);font-weight:bold;text-transform:uppercase;";
+    noButton.innerHTML = "No";
+    
+    noButton.addEventListener('click', ()  => { unlockScreen(); unlockScroll(); document.getElementById('__currentQuestion__').remove(); });
+    noButton.addEventListener('click', noCallback);
+
+    questionWindow.append(windowTitle, windowQuestion, yesButton, noButton);
+
+    document.querySelector('html').appendChild(questionWindow);
+}
+
+/*
+
+<div id="installer" class="hide">
+    <h1>Updating</h1>
+    <a id="installationStage"></a>
+    <div id="progress">
+        <div id="progressBar"></div>
+    </div>
+</div>
+
+*/
 
 async function addPosts(){
 

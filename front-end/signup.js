@@ -1,5 +1,7 @@
 const sjcl = require('sjcl');
 
+'use strict';
+
 function onSubmit(event){
 	let usernameField = document.getElementById("login__username");
 	let    emailField = document.getElementById("login__email"   );
@@ -15,9 +17,9 @@ function onSubmit(event){
 
 	// Hash password for seciurity
 	password = sjcl.hash.sha256.hash(password);
-	
+	debugger;
 	signup(username, email, password).then( (res) => {
-		switch( (res === false) ? 10 : res["errorCode"] ){
+		switch( (res === false) ? -1 : res["exitCode"] ){
 			case 0:
 				window.location.href = "./explore.html";
 			case 5:

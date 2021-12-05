@@ -1,8 +1,19 @@
-window.$ = window.jQuery = require('jquery');
-
+const {ipcRenderer} = require('electron');
 const imagesLoaded  = require('imagesloaded');
+const AutoUpdater   = require('auto-updater');
 const Masonry       = require('masonry-layout');
-const { parseSize } = require('plupload');
+
+'use strict';
+
+var autoUpdater = new AutoUpdater({
+    contenthost     : 'https://github.com/iLikeTrioxin/MigurdiaClient/archive/refs/heads/master.zip',
+    jsonhost        : 'https://raw.githubusercontent.com/iLikeTrioxin/MigurdiaClient/master/package.json',
+    autoupdate      : false,
+    devmode         : false,
+    checkgit        : true,
+    pathToJson      : '',
+    progressDebounce: 0
+});
 
 var masonryGallery = new Masonry(
     '.gallery',
@@ -15,13 +26,12 @@ var masonryGallery = new Masonry(
 
 var elem = document.getElementById('gallery');
 
-let loadingImages = [];
 function addImage(src){
-    var image = document.createElement("img");
+    let image = document.createElement("img");
     image.setAttribute("src", src);
     image.setAttribute("alt", "Image");
     
-    var item = document.createElement("div");
+    let item = document.createElement("div");
     item.classList.add("gallery-item");
     item.appendChild(image);
 
@@ -30,8 +40,7 @@ function addImage(src){
     //item.addEventListener('click', function(){
     //    
     //});
-	loadingImages.push(item);
-    return item;
+    return image;
 }
 
 function scrolledUp(){
@@ -45,28 +54,30 @@ function scrolledDown(){
 
 let seenPosts = [];
 let loading = false;
-function scrolledToTheBottom(first=false) {
+async function scrolledToTheBottom(first=false) {
 	if(loading) return;
 	
 	loading = true;
-	
-    getPosts(first ? 15 : 30).then( (files) => {
-        let posts = [];
+	let promises = [];
 
+    getPosts(first ? 15 : 30).then( (files) => {
         files.forEach( (file ) => {
             if(seenPosts.includes(file['id'])) return;
+            
             seenPosts.push(file['id']);
-            posts.push(getRealSource((file['thumbnailHosting'] ? file['thumbnailHosting'] : "") + file['thumbnailPath']).then( (resp) => addImage(resp) ));
-        });
-
-        Promise.all(posts).then(() =>{
-            $(loadingImages).imagesLoaded().done(() => {
-                masonryGallery.layout();
-                loadingImages = [];
-                loading = false;
-            });
+            
+            promises.push(
+                getRealSource( (file['thumbnailHosting'] ?? "") + file['thumbnailPath'] )
+                .then( src => {
+                    return new Promise( (r) => {
+                        addImage(src).addEventListener('load', () => { masonryGallery.layout(); r(); })
+                    });
+                })
+            );
         });
     });
+
+    Promise.all(promises).then(() => { loading = false; });
 }
 
 var previousYPos = (window.innerHeight + window.scrollY);
@@ -95,9 +106,9 @@ function clickCallback(event){
 
 //document.querySelector('.topArrow').addEventListener('click', function(){window.scrollTo(0, 0);});
 
-document.getElementById('signout'    ).addEventListener('click', function(event) { signout(true); } );
-document.getElementById('uploadIcon' ).addEventListener('click', function(event) { window.location.href = './upload.html'; } );
-document.getElementById('userIcon'   ).addEventListener('click', function(event) {
+document.getElementById('signout'       ).addEventListener('click', function(event) { signout(true); } );
+document.getElementById('uploadIcon'    ).addEventListener('click', function(event) { window.location.href = './upload.html'; } );
+document.getElementById('userIcon'      ).addEventListener('click', function(event) {
     document.getElementById('userMenu').classList.toggle('hide');
 });
 
@@ -105,13 +116,103 @@ callbacks.push(
     {
         target   : document.getElementById('userMenu'),
         exception: document.getElementById('userIcon'),
-        callback : function(){
+        callback : () => {
             document.getElementById('userMenu').classList.add('hide');
         }
     }
 );
 
-window.addEventListener('click'       ,   clickCallback);
-window.addEventListener('scroll'      ,  scrollCallback);
+window.addEventListener('click' ,  clickCallback);
+window.addEventListener('scroll', scrollCallback);
+
+function cancelUpdate(){
+    unlockScreen();
+    unlockScroll();
+    
+    window.addEventListener('scroll', scrollCallback);
+    
+    document.getElementById('updateWindow'  ).classList.add   ('hide');
+    document.getElementById('updateAvaiable').classList.remove('hide');
+}
+
+function confirmUpdate(){
+    document.getElementById('askForUpdate').classList.add   ('hide');
+    document.getElementById('installer'   ).classList.remove('hide');
+    move();
+}
+
+function updatePopup(){
+    lockScreen();
+    lockScroll();
+
+    window.removeEventListener('scroll', scrollCallback);
+
+    document.getElementById('updateWindow'  ).classList.remove('hide');
+    document.getElementById('updateAvaiable').classList.add   ('hide');
+}
+
+function move() {
+    var progressBar = document.getElementById("progressBar");
+    var width = 1;
+    var id = setInterval( () => {
+        if (width >= 100) {
+            clearInterval(id);
+            width = 0;
+        } else {
+            width++;
+            progressBar.style.width = width + "%";
+        }
+    }, 10);
+}
+
+document.getElementById('updateAvaiable').addEventListener('click', () =>{
+    window.removeEventListener('scroll', scrollCallback);
+    
+    function yes() {
+        window.addEventListener('scroll', scrollCallback);
+        autoUpdater.fire('download-update');
+    }
+
+    function no() {
+        window.addEventListener('scroll', scrollCallback);
+    }
+
+    askUser("Update", "Do you want to update?", yes, no);
+});
 
 scrolledToTheBottom(true);
+
+autoUpdater.on('update.downloaded'   , () => { setProgressWindowProgress(0, "Installing"); autoUpdater.fire('extract'); });
+autoUpdater.on('update.not-installed', () => { setProgressWindowProgress(0, "Installing"); autoUpdater.fire('extract'); });
+
+autoUpdater.on('update.extracted', function() {
+    removeProgressWindow();
+    askUser("Update installed", "restart required<br/>Do you want to restart now?", ()=>{
+        ipcRenderer.sendSync("relaunch");
+    }, ()=>{ document.getElementById('updateAvaiable').classList.add('hide'); });
+});
+
+autoUpdater.on('download.start', function(name) {
+    addProgressWindow('updating', name, 0);
+});
+
+autoUpdater.on('download.progress', function(name, perc) {
+    setProgressWindowProgress(perc);
+});
+
+autoUpdater.on('download.end', function(name) { });
+
+autoUpdater.on('download.error', function(err) {
+    removeProgressWindow();
+    error("An error occurred during update. Try later.", 3000);
+});
+
+autoUpdater.on('end', function() { });
+
+autoUpdater.on('check.out-dated', function(v_old, v) {
+    document.getElementById('updateAvaiable').classList.remove('hide');
+});
+
+autoUpdater.on('error', (name, e) => { console.error(name, e); });
+
+autoUpdater.fire('check');

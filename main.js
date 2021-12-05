@@ -1,7 +1,6 @@
-const { app, BrowserWindow } = require('electron');
-
+const { app, BrowserWindow, ipcMain } = require('electron');
 const browserMode = false;
-const   debugMode = false;
+const   debugMode = true ;
 
 function createWindow() {
   // Create the browser window.
@@ -24,6 +23,11 @@ function createWindow() {
 
   if(debugMode) mainWindow.webContents.openDevTools();
 }
+
+// Event handler for synchronous incoming messages
+ipcMain.on('relaunch', (event, arg) => {
+    app.relaunch();
+ })
 
 app.whenReady().then(createWindow);
 

@@ -1,5 +1,7 @@
 const sjcl = require('sjcl');
 
+'use strict';
+
 function onSubmit(){
 	let usernameField = document.getElementById("login__username");
 	let passwordField = document.getElementById("login__password");
@@ -16,7 +18,7 @@ function onSubmit(){
 
 	// append "data" with data nececery to be sent to web api
 	signin(username, password).then((response)=>{
-		switch( (response === false) ? 3 : response['exitCode'] ){
+		switch( (response === false) ? -1 : response['exitCode'] ){
 			case 0:
 				if (document.getElementById('keepSignedin').checked)
 					localStorage.setItem('preventSignout', true);
