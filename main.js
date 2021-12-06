@@ -23,22 +23,22 @@ autoUpdater.on('checking-for-update' , (    ) => { log.info("checking-for-update
 
 autoUpdater.on('error', (err) => {
     log.info("error have occured");
-    ipcMain.sendSync('update-error', err);
+    mainWindow.webContents.send('update-error', err);
 });
 
 autoUpdater.on('update-available', (info) => {
     log.info("update available");
-    ipcMain.sendSync('update-available', info);
+    mainWindow.webContents.send('update-available', info);
 });
 
 autoUpdater.on('download-progress', (progressObj) => {
     log.info("download progress");
-    ipcMain.sendSync('download-progress', progressObj);
+    mainWindow.webContents.send('download-progress', progressObj);
 });
 
 autoUpdater.on('update-downloaded', (info) => {
     log.info("update downloaded");
-    ipcMain.sendSync('update-downloaded', info);
+    mainWindow.webContents.send('update-downloaded', info);
 });
 
 ipcMain.on('update-quitAndInstall', () => {
@@ -56,9 +56,11 @@ ipcMain.on('check', (event) => {
     event.returnValue = null;
 });
 
+var mainWindow;
+
 function createWindow() {
     // Create the browser window.
-    const mainWindow = new BrowserWindow({
+    mainWindow = new BrowserWindow({
         width: 400 + (debugMode ? 400 : 0),
         height: 500,
         icon: 'front-end/resources/roxy.png',
@@ -70,12 +72,6 @@ function createWindow() {
         frame: false
     });
 
-    ipcMain.on('setWindowPosition', (event, args) => {
-        mainWindow.setPosition(args[0], args[1]);
-
-        event.returnValue = null;
-    });
-
     //mainWindow.setMaximumSize(800, 1000);
     mainWindow.setMinimumSize(350, 450);
 
@@ -83,6 +79,12 @@ function createWindow() {
 
     if(debugMode) mainWindow.webContents.openDevTools();
 }
+
+ipcMain.on('setWindowPosition', (event, args) => {
+    mainWindow.setPosition(args[0], args[1]);
+
+    event.returnValue = null;
+});
 
 app.whenReady().then(createWindow);
 
