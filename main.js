@@ -5,12 +5,34 @@ const   log                           = require('electron-log');
 const browserMode = false;
 const   debugMode = true ;
 
-var installUpdateBeforeQuit = false;
-
 autoUpdater.autoDownload = false;
 autoUpdater.logger       = log;
 
 log.info('App starting...');
+
+var mainWindow;
+
+function createWindow() {
+    // Create the browser window.
+    mainWindow = new BrowserWindow({
+        width: 400 + (debugMode ? 400 : 0),
+        height: 500,
+        icon: 'front-end/resources/roxy.png',
+        backgroundColor: '#2c3338',
+        webPreferences: {
+            nodeIntegration: !browserMode,
+            contextIsolation: false
+        },
+        frame: false
+    });
+
+    //mainWindow.setMaximumSize(800, 1000);
+    mainWindow.setMinimumSize(350, 450);
+
+    mainWindow.loadFile('front-end/signin.html');
+
+    if(debugMode) mainWindow.webContents.openDevTools();
+}
 
 autoUpdater.setFeedURL({
     provider: "github",
@@ -41,12 +63,16 @@ autoUpdater.on('update-downloaded', (info) => {
     mainWindow.webContents.send('update-downloaded', info);
 });
 
-ipcMain.on('update-quitAndInstall', () => {
+ipcMain.on('update-quitAndInstall', (event) => {
     autoUpdater.quitAndInstall(true, true);
+
+    event.returnValue = null;
 });
 
-ipcMain.on('update-install', () => {
-    installUpdateBeforeQuit = true;
+ipcMain.on('update-download', (event) => {
+    autoUpdater.downloadUpdate();
+    
+    event.returnValue = null;
 });
 
 ipcMain.on('check', (event) => {
@@ -55,30 +81,6 @@ ipcMain.on('check', (event) => {
 
     event.returnValue = null;
 });
-
-var mainWindow;
-
-function createWindow() {
-    // Create the browser window.
-    mainWindow = new BrowserWindow({
-        width: 400 + (debugMode ? 400 : 0),
-        height: 500,
-        icon: 'front-end/resources/roxy.png',
-        backgroundColor: '#2c3338',
-        webPreferences: {
-            nodeIntegration: !browserMode,
-            contextIsolation: false
-        },
-        frame: false
-    });
-
-    //mainWindow.setMaximumSize(800, 1000);
-    mainWindow.setMinimumSize(350, 450);
-
-    mainWindow.loadFile('front-end/signin.html');
-
-    if(debugMode) mainWindow.webContents.openDevTools();
-}
 
 ipcMain.on('setWindowPosition', (event, args) => {
     mainWindow.setPosition(args[0], args[1]);
@@ -89,7 +91,6 @@ ipcMain.on('setWindowPosition', (event, args) => {
 app.whenReady().then(createWindow);
 
 app.on('window-all-closed', function () {
-    if (installUpdateBeforeQuit) autoUpdater.quitAndInstall(true, false);
     if (process.platform !== 'darwin') app.quit();
 });
 

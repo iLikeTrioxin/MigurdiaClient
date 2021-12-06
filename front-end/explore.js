@@ -159,7 +159,7 @@ document.getElementById('updateAvaiable').addEventListener('click', () =>{
     
     function yes() {
         window.addEventListener('scroll', scrollCallback);
-        autoUpdater.fire('download-update');
+        ipcRenderer.sendSync('update-download');
         addProgressWindow('updating', 'downloading', 0);
     }
 
@@ -176,7 +176,7 @@ ipcRenderer.on('update-downloaded', (event, info) => {
     removeProgressWindow();
     askUser("Update downloaded", "restart is required<br/>Do you want to restart now?", ()=>{
         ipcRenderer.sendSync('update-quitAndInstall');
-    }, ()=>{ ipcRenderer.sendSync('update-install'); document.getElementById('updateAvaiable').classList.add('hide'); });
+    }, ()=>{ document.getElementById('updateAvaiable').classList.add('hide'); });
 });
 
 ipcRenderer.on('download-progress', (progressObject) => {
