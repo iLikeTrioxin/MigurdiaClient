@@ -93,8 +93,6 @@ function clickCallback(event){
     });
 }
 
-//document.querySelector('.topArrow').addEventListener('click', function(){window.scrollTo(0, 0);});
-
 document.getElementById('signout'       ).addEventListener('click', function(event) { signout(true); } );
 document.getElementById('uploadIcon'    ).addEventListener('click', function(event) { window.location.href = './upload.html'; } );
 document.getElementById('userIcon'      ).addEventListener('click', function(event) {
@@ -140,20 +138,6 @@ function updatePopup(){
     document.getElementById('updateAvaiable').classList.add   ('hide');
 }
 
-function move() {
-    var progressBar = document.getElementById("progressBar");
-    var width = 1;
-    var id = setInterval( () => {
-        if (width >= 100) {
-            clearInterval(id);
-            width = 0;
-        } else {
-            width++;
-            progressBar.style.width = width + "%";
-        }
-    }, 10);
-}
-
 document.getElementById('updateAvaiable').addEventListener('click', () =>{
     window.removeEventListener('scroll', scrollCallback);
     
@@ -174,9 +158,12 @@ scrolledToTheBottom(true);
 
 ipcRenderer.on('update-downloaded', (event, info) => {
     removeProgressWindow();
-    askUser("Update downloaded", "restart is required<br/>Do you want to restart now?", ()=>{
-        ipcRenderer.sendSync('update-quitAndInstall');
-    }, ()=>{ document.getElementById('updateAvaiable').classList.add('hide'); });
+    
+    askUser(
+        "Update downloaded", "restart is required<br/>Do you want to restart now?",
+        () => { ipcRenderer.sendSync('update-quitAndInstall');                   },
+        () => { document.getElementById('updateAvaiable').classList.add('hide'); }
+    );
 });
 
 ipcRenderer.on('download-progress', (progressObject) => {
@@ -201,22 +188,22 @@ document.getElementById('closeButton').addEventListener('click', () => {
 var __CW_DELTA_X__ = 0;
 var __CW_DELTA_Y__ = 0;
 var toolBarHold = false;
-document.getElementById('toolBar').onmousemove = function(event){
+document.getElementById('toolBar').addEventListener('mousemove', (event) => {
     if(!toolBarHold) return;
     
     ipcRenderer.sendSync('setWindowPosition', [
         event.screenX - __CW_DELTA_X__,
         event.screenY - __CW_DELTA_Y__
     ]);
-}
+});
 
-document.getElementById('toolBar').onmousedown = (event) => {
+document.getElementById('toolBar').addEventListener('mousedown', (event) => {
     __CW_DELTA_X__ = event.screenX - window.screenX;
     __CW_DELTA_Y__ = event.screenY - window.screenY;
 
     toolBarHold = true;
-}
+});
 
-document.getElementById('toolBar').onmouseup = () => {
+document.getElementById('toolBar').addEventListener('mouseup', () => {
     toolBarHold = false;
-}
+});
