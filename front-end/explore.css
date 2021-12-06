@@ -6,7 +6,32 @@
 .gallery-item img { width : 100% ; border-radius: 10px; animation: scaleUpReverse 0.2s forwards; display: block; }
 .gallery-item img:hover                               { animation: scaleUp        0.2s forwards; }
 
-body  { background-color: #192025; }
+#toolBar{
+    z-index: 11;
+    position: fixed;
+    top: 0;
+    width: 100vw;
+    height: 25px;
+    background-color: #20272c;
+}
+#closeButton{
+    z-index: 12;
+    float: right;
+    border-radius: 100%;
+    
+    width: 13px;
+    height: 13px;
+
+    margin: 6px;
+
+    background-color: rgb(100, 35, 35);
+}
+
+#closeButton:hover{
+    background-color: rgb(200, 70, 70);
+}
+
+body  { background-color: #192025; margin: 0; }
 .hide { display: none; }
 
 ::-webkit-scrollbar { display: none; }
@@ -117,7 +142,7 @@ body  { background-color: #192025; }
   width : 100%;
   height: 50px;
   
-  top: 0px;
+  top: 25px;
   left: 0px;
   background-color: #20272cfa;
   transition: top 0.3s;

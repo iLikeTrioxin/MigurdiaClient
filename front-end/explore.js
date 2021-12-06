@@ -33,7 +33,7 @@ function addImage(src){
 }
 
 function scrolledUp(){
-    document.getElementById('menuBar').style.top = "0px";
+    document.getElementById('menuBar').style.top = "25px";
 }
 
 function scrolledDown(){
@@ -193,3 +193,30 @@ ipcRenderer.on('update-available', () => {
 });
 
 ipcRenderer.sendSync('check');
+
+document.getElementById('closeButton').addEventListener('click', () => {
+    window.close();
+})
+
+var __CW_DELTA_X__ = 0;
+var __CW_DELTA_Y__ = 0;
+var toolBarHold = false;
+document.getElementById('toolBar').onmousemove = function(event){
+    if(!toolBarHold) return;
+    
+    ipcRenderer.sendSync('setWindowPosition', [
+        event.screenX - __CW_DELTA_X__,
+        event.screenY - __CW_DELTA_Y__
+    ]);
+}
+
+document.getElementById('toolBar').onmousedown = (event) => {
+    __CW_DELTA_X__ = event.screenX - window.screenX;
+    __CW_DELTA_Y__ = event.screenY - window.screenY;
+
+    toolBarHold = true;
+}
+
+document.getElementById('toolBar').onmouseup = () => {
+    toolBarHold = false;
+}

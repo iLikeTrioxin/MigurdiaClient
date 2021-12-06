@@ -57,25 +57,31 @@ ipcMain.on('check', (event) => {
 });
 
 function createWindow() {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    width: 400 + (debugMode ? 400 : 0),
-    height: 500,
-    icon: 'front-end/resources/roxy.png',
-    backgroundColor: '#2c3338',
-    webPreferences: {
-      nodeIntegration: !browserMode,
-      contextIsolation: false
-    },
-    frame: false
-  });
+    // Create the browser window.
+    const mainWindow = new BrowserWindow({
+        width: 400 + (debugMode ? 400 : 0),
+        height: 500,
+        icon: 'front-end/resources/roxy.png',
+        backgroundColor: '#2c3338',
+        webPreferences: {
+            nodeIntegration: !browserMode,
+            contextIsolation: false
+        },
+        frame: false
+    });
 
-  //mainWindow.setMaximumSize(800, 1000);
-  mainWindow.setMinimumSize(350, 450);
+    ipcMain.on('setWindowPosition', (event, args) => {
+        mainWindow.setPosition(args[0], args[1]);
 
-  mainWindow.loadFile('front-end/signin.html');
+        event.returnValue = null;
+    });
 
-  if(debugMode) mainWindow.webContents.openDevTools();
+    //mainWindow.setMaximumSize(800, 1000);
+    mainWindow.setMinimumSize(350, 450);
+
+    mainWindow.loadFile('front-end/signin.html');
+
+    if(debugMode) mainWindow.webContents.openDevTools();
 }
 
 app.whenReady().then(createWindow);
