@@ -1,12 +1,16 @@
 {
-  "name": "MigurdiaClient",
-  "productName": "MigurdiaClient",
-  "description": "Migurdia client",
+  "name": "Migurdia",
+  "description": "Migurdia is client for database full of images sorted by tags.",
+  "version": "0.6.3",
+  "author": {
+    "name": "iLikeTrioxin",
+    "email": "iLike135Trioxane@protonmail.com"
+  },
+  "license": "AGPL-3.0",
   "main": "main.js",
-  "version": "0.6.1",
-  "author": "iLikeTrioxin",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "publishApp": "electron-builder --linux --win -p always"
   },
   "dependencies": {
     "@yaireo/tagify": "^4.9.2",
@@ -16,20 +20,29 @@
     "masonry-layout": "^4.2.2",
     "node-fetch": "^2.6.1",
     "plupload": "^2.3.7",
-    "sharp": "^0.29.1",
+    "sharp": "^0.29.3",
     "sjcl": "^1.0.8",
     "tslib": "^2.3.1",
     "video-snapshot": "^1.0.11"
   },
   "devDependencies": {
-    "electron": "^15.1.1"
+    "electron": "^15.1.1",
+    "electron-builder": "^22.14.5"
   },
   "build": {
     "appId": "com.github.iLikeTrioxin.MigurdiaClient",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "iLikeTrioxin",
+        "repo": "MigurdiaClient"
+      }
+    ],
     "win": {
       "target": "nsis"
     },
     "linux": {
+      "category": "Graphics",
       "target": "AppImage"
     }
   }

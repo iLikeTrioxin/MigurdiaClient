@@ -1,61 +1,57 @@
-const { BrowserWindow, app, ipcMain, autoUpdater, ipcRenderer } = require('electron');
-const { appUpdater                  } = require('electron-updater');
-const log = require('electron-log');
+const { BrowserWindow, app, ipcMain } = require('electron');
+const { autoUpdater                 } = require('electron-updater');
+const   log                           = require('electron-log');
 
 const browserMode = false;
 const   debugMode = true ;
 
-//autoUpdater.autoDownload = false;
+var installUpdateBeforeQuit = false;
+
+autoUpdater.autoDownload = false;
 autoUpdater.logger       = log;
 
+log.info('App starting...');
+
 autoUpdater.setFeedURL({
-    provider: "generic",
-    url     : "https://github.com/iLikeTrioxin/MigurdiaClient"
-})
-
-autoUpdater.on('update-not-available', () => { 
-    console.log("update-not-available");
-});
-autoUpdater.on('checking-for-update' , () => { 
-    console.log("checking-for-update");
- });
-
-autoUpdater.on('update-available', () => {
-    console.log("update-available");
-    ipcMain.sendSync('update-available');
+    provider: "github",
+    owner   : "iLikeTrioxin",
+    repo    : "MigurdiaClient"
 });
 
-autoUpdater.on('error', () => {
-    console.log("error have occured");
+autoUpdater.on('update-not-available', (info) => { log.info("up-to-date"         ); });
+autoUpdater.on('checking-for-update' , (    ) => { log.info("checking-for-update"); });
+
+autoUpdater.on('error', (err) => {
+    log.info("error have occured");
+    ipcMain.sendSync('update-error', err);
 });
 
-autoUpdater.on('download-progress', () => {
-    console.log("download-progress");
-    ipcMain.sendSync('download-progress');
+autoUpdater.on('update-available', (info) => {
+    log.info("update available");
+    ipcMain.sendSync('update-available', info);
 });
 
-autoUpdater.on('update-downloaded', () => {
-    console.log("update-downloaded");
-    ipcMain.sendSync('update-downloaded');
+autoUpdater.on('download-progress', (progressObj) => {
+    log.info("download progress");
+    ipcMain.sendSync('download-progress', progressObj);
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+    log.info("update downloaded");
+    ipcMain.sendSync('update-downloaded', info);
+});
+
+ipcMain.on('update-quitAndInstall', () => {
+    autoUpdater.quitAndInstall(true, true);
+});
+
+ipcMain.on('update-install', () => {
+    installUpdateBeforeQuit = true;
 });
 
 ipcMain.on('check', (event) => {
-    console.log("eee");
-    autoUpdater.checkForUpdates();
-    console.log("aaaaa");
-
-    event.returnValue = null;
-});
-
-ipcMain.on('aa', (event) => {
-    console.log("nii");
-
-    event.returnValue = null;
-});
-
-ipcMain.on('install', (event) => {
-    console.log("install");
-    autoUpdater.quitAndInstall();
+    log.info("check requested");
+    autoUpdater.checkForUpdatesAndNotify();
 
     event.returnValue = null;
 });
@@ -82,21 +78,13 @@ function createWindow() {
   if(debugMode) mainWindow.webContents.openDevTools();
 }
 
-// Event handler for synchronous incoming messages
-ipcMain.on('relaunch', (event, arg) => {
-    app.relaunch();
- });
-
- ipcMain.on('relaunch', (event, arg) => {
-    appUpdater.checkForUpdatesAndNotify();
- });
-
 app.whenReady().then(createWindow);
 
 app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') app.quit();
+    if (installUpdateBeforeQuit) autoUpdater.quitAndInstall(true, false);
+    if (process.platform !== 'darwin') app.quit();
 });
 
 app.on('activate', function () {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });

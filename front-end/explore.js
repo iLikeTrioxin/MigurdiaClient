@@ -1,19 +1,8 @@
 const {ipcRenderer} = require('electron');
 const imagesLoaded  = require('imagesloaded');
-const AutoUpdater   = require('auto-updater');
 const Masonry       = require('masonry-layout');
 
 //'use strict';
-
-var autoUpdater = new AutoUpdater({
-    contenthost     : 'https://github.com/iLikeTrioxin/MigurdiaClient/archive/refs/heads/master.zip',
-    jsonhost        : 'https://raw.githubusercontent.com/iLikeTrioxin/MigurdiaClient/master/package.json',
-    autoupdate      : false,
-    devmode         : true,
-    checkgit        : false,
-    pathToJson      : '',
-    progressDebounce: 0
-});
 
 var masonryGallery = new Masonry(
     '.gallery',
@@ -171,6 +160,7 @@ document.getElementById('updateAvaiable').addEventListener('click', () =>{
     function yes() {
         window.addEventListener('scroll', scrollCallback);
         autoUpdater.fire('download-update');
+        addProgressWindow('updating', 'downloading', 0);
     }
 
     function no() {
@@ -182,49 +172,24 @@ document.getElementById('updateAvaiable').addEventListener('click', () =>{
 
 scrolledToTheBottom(true);
 
-autoUpdater.on('update.downloaded'   , () => { setProgressWindowProgress(0, "Installing"); autoUpdater.fire('extract'); });
-autoUpdater.on('update.not-installed', () => { setProgressWindowProgress(0, "Installing"); autoUpdater.fire('extract'); });
-
-autoUpdater.on('update.extracted', function() {
-    console.log("Update extracted successfully!");
+ipcRenderer.on('update-downloaded', (event, info) => {
     removeProgressWindow();
-    askUser("Update installed", "restart required<br/>Do you want to restart now?", ()=>{
-        ipcRenderer.sendSync("relaunch");
-    }, ()=>{ document.getElementById('updateAvaiable').classList.add('hide'); });
+    askUser("Update downloaded", "restart is required<br/>Do you want to restart now?", ()=>{
+        ipcRenderer.sendSync('update-quitAndInstall');
+    }, ()=>{ ipcRenderer.sendSync('update-install'); document.getElementById('updateAvaiable').classList.add('hide'); });
 });
 
-autoUpdater.on('download.start', function(name) {
-    addProgressWindow('updating', name, 0);
+ipcRenderer.on('download-progress', (progressObject) => {
+    setProgressWindowProgress(progressObject.percent);
 });
 
-autoUpdater.on('download.progress', function(name, perc) {
-    setProgressWindowProgress(perc);
-});
-
-autoUpdater.on('download.error', function(err) {
+ipcRenderer.on('update-error', function(err) {
     removeProgressWindow();
     error("An error occurred during update. Try later.", 3000);
 });
 
-autoUpdater.on('check.out-dated', function(v_old, v) {
-    console.warn("Your version is outdated. " + v_old + " of " + v);
+ipcRenderer.on('update-available', () => {
     document.getElementById('updateAvaiable').classList.remove('hide');
 });
 
-autoUpdater.on('git-clone', function() {
-  console.log("You have a clone of the repository. Use 'git pull' to be up-to-date");
-});
-autoUpdater.on('check.up-to-date', function(v) {
-  console.info("You have the latest version: " + v);
-});
-autoUpdater.on('download.end', function(name) {
-  console.log("Downloaded " + name);
-});
-autoUpdater.on('end', function() {
-  console.log("The app is ready to function");
-});
-autoUpdater.on('error', function(name, e) {
-  console.error(name, e);
-});
-
-//autoUpdater.fire('check');
+ipcRenderer.sendSync('check');
