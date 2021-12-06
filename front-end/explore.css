@@ -6,7 +6,7 @@
 .gallery-item img { width : 100% ; border-radius: 10px; animation: scaleUpReverse 0.2s forwards; display: block; }
 .gallery-item img:hover                               { animation: scaleUp        0.2s forwards; }
 
-body  { background-color: green; }
+body  { background-color: #192025; }
 .hide { display: none; }
 
 ::-webkit-scrollbar { display: none; }
