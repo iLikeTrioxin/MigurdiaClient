@@ -1,7 +1,5 @@
 const sjcl = require('sjcl');
 
-'use strict';
-
 function onSubmit(){
 	let usernameField = document.getElementById("login__username");
 	let passwordField = document.getElementById("login__password");

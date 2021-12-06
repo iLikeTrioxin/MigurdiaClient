@@ -3,8 +3,6 @@ const sharp           = require('sharp'         );
 const VideoSnapshoter = require('video-snapshot').default;
 const Tagify          = require('@yaireo/tagify');
 
-'use strict';
-
 const preferedThumbnailPixelArea = 512 * 512;
 const fileBlackHoleAPI = 'https://fileblackhole.000webhostapp.com/API.php';
 

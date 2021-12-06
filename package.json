@@ -2,16 +2,16 @@
   "name": "MigurdiaClient",
   "productName": "MigurdiaClient",
   "description": "Migurdia client",
-  "keywords": [],
   "main": "main.js",
-  "version": "0.6.2",
+  "version": "0.6.1",
   "author": "iLikeTrioxin",
   "scripts": {
     "start": "electron ."
   },
   "dependencies": {
     "@yaireo/tagify": "^4.9.2",
-    "auto-updater": "^1.0.2",
+    "electron-log": "^4.4.1",
+    "electron-updater": "^4.6.1",
     "imagesloaded": "^4.1.4",
     "masonry-layout": "^4.2.2",
     "node-fetch": "^2.6.1",
@@ -24,8 +24,13 @@
   "devDependencies": {
     "electron": "^15.1.1"
   },
-  "auto-updater": {
-    "repo": "iLikeTrioxin/MigurdiaClient",
-    "branch": "master"
+  "build": {
+    "appId": "com.github.iLikeTrioxin.MigurdiaClient",
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
   }
 }

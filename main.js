@@ -1,6 +1,64 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { BrowserWindow, app, ipcMain, autoUpdater, ipcRenderer } = require('electron');
+const { appUpdater                  } = require('electron-updater');
+const log = require('electron-log');
+
 const browserMode = false;
 const   debugMode = true ;
+
+//autoUpdater.autoDownload = false;
+autoUpdater.logger       = log;
+
+autoUpdater.setFeedURL({
+    provider: "generic",
+    url     : "https://github.com/iLikeTrioxin/MigurdiaClient"
+})
+
+autoUpdater.on('update-not-available', () => { 
+    console.log("update-not-available");
+});
+autoUpdater.on('checking-for-update' , () => { 
+    console.log("checking-for-update");
+ });
+
+autoUpdater.on('update-available', () => {
+    console.log("update-available");
+    ipcMain.sendSync('update-available');
+});
+
+autoUpdater.on('error', () => {
+    console.log("error have occured");
+});
+
+autoUpdater.on('download-progress', () => {
+    console.log("download-progress");
+    ipcMain.sendSync('download-progress');
+});
+
+autoUpdater.on('update-downloaded', () => {
+    console.log("update-downloaded");
+    ipcMain.sendSync('update-downloaded');
+});
+
+ipcMain.on('check', (event) => {
+    console.log("eee");
+    autoUpdater.checkForUpdates();
+    console.log("aaaaa");
+
+    event.returnValue = null;
+});
+
+ipcMain.on('aa', (event) => {
+    console.log("nii");
+
+    event.returnValue = null;
+});
+
+ipcMain.on('install', (event) => {
+    console.log("install");
+    autoUpdater.quitAndInstall();
+
+    event.returnValue = null;
+});
 
 function createWindow() {
   // Create the browser window.
@@ -27,7 +85,11 @@ function createWindow() {
 // Event handler for synchronous incoming messages
 ipcMain.on('relaunch', (event, arg) => {
     app.relaunch();
- })
+ });
+
+ ipcMain.on('relaunch', (event, arg) => {
+    appUpdater.checkForUpdatesAndNotify();
+ });
 
 app.whenReady().then(createWindow);
 

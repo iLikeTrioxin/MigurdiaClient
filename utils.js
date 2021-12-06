@@ -1,8 +1,6 @@
 const fetch  = require("node-fetch");
 const apiURL = "https://migurdia.yukiteru.xyz/API.php?";
 
-'use strict';
-
 //-------------------
 //  Pixiv handling 
 //-------------------
