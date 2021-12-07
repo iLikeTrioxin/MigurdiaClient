@@ -1,7 +1,7 @@
-const plupload        = require('plupload'      );
-const sharp           = require('sharp'         );
 const VideoSnapshoter = require('video-snapshot').default;
+const plupload        = require('plupload'      );
 const Tagify          = require('@yaireo/tagify');
+const jimp            = require('jimp'          );
 
 'use strict';
 
@@ -74,13 +74,12 @@ function addFile(event) {
 
 // this function returns File instance
 async function getImageThumbnail(file, name){
-    let image    = sharp(file).jpeg();
-    let metadata = await image.metadata();
+    let image    = await jimp.read(file);
     
-    let pixelArea   = metadata.width * metadata.height;
-    let aspectRatio = metadata.width / metadata.height;
+    let pixelArea   = image.bitmap.width * image.bitmap.height;
+    let aspectRatio = image.bitmap.width / image.bitmap.height;
     
-    if(pixelArea <= preferedThumbnailPixelArea) return new File([Buffer.from(await image.toBuffer())], name);
+    if(pixelArea <= preferedThumbnailPixelArea) return new File([Buffer.from(await image.getBufferAsync(jimp.MIME_JPEG))], name);
 
     let newWidth  = Math.sqrt(preferedThumbnailPixelArea * aspectRatio);
     let newHeight = preferedThumbnailPixelArea / newWidth;
@@ -90,7 +89,7 @@ async function getImageThumbnail(file, name){
         parseInt(newHeight)
     );
     
-    return new File([Buffer.from(await image.toBuffer())], name);
+    return new File([await image.getBufferAsync(jimp.MIME_JPEG)], name);
 }
 
 function randomInt(){

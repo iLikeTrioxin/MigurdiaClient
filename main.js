@@ -1,22 +1,10 @@
 const { BrowserWindow, app, ipcMain } = require('electron');
-const { autoUpdater                 } = require('electron-updater');
-const   log                           = require('electron-log');
 
 'use strict';
 
-app.disableHardwareAcceleration();
-app.commandLine.appendSwitch("disable-software-rasterizer");
-app.commandLine.hasSwitch('disable-gpu')
-
 const debugMode = process.argv.includes('--debug') || process.argv.includes('-d');
 
-autoUpdater.autoDownload = false;
-autoUpdater.logger       = log;
-
-log.info('App starting...');
-
 var mainWindow;
-
 function createWindow() {
     // Create the browser window.
     mainWindow = new BrowserWindow({
@@ -39,18 +27,48 @@ function createWindow() {
     if(debugMode) mainWindow.webContents.openDevTools();
 }
 
+ipcMain.on('setWindowPosition', (event, args) => {
+    mainWindow.setPosition(args[0], args[1]);
+
+    event.returnValue = null;
+});
+
+app.whenReady().then(createWindow);
+
+app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+});
+
+const { log } = require('electron-log');
+
+function sendToRenderer(channel, args) {
+    mainWindow.webContents.send(channel, args);
+
+    if(!debugMode) return;
+
+    log.info(`Message sent to renderer on channel '${channel}' args: `);
+    log.info(args);
+}
+
+//
+// autoUpdater setup
+//
+
+const { autoUpdater } = require('electron-updater');
+
+if (debugMode)
+    autoUpdater.logger = log;
+
+autoUpdater.autoDownload = false;
 autoUpdater.setFeedURL({
     provider: "github",
     owner   : "iLikeTrioxin",
     repo    : "MigurdiaClient"
 });
-
-function sendToRenderer(channel, args) {
-    log.info(`Message sent to renderer on channel '${channel}' args: ${args}`);
-    //log.info(args);
-
-    mainWindow.webContents.send(channel, args);
-}
 
 autoUpdater.on('update-not-available', (info) => { sendToRenderer("update-not-available", info); });
 autoUpdater.on('checking-for-update' , (    ) => { sendToRenderer("checking-for-update" , null); });
@@ -77,18 +95,3 @@ ipcMain.on('check', (event) => {
     event.returnValue = null;
 });
 
-ipcMain.on('setWindowPosition', (event, args) => {
-    mainWindow.setPosition(args[0], args[1]);
-
-    event.returnValue = null;
-});
-
-app.whenReady().then(createWindow);
-
-app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') app.quit();
-});
-
-app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-});

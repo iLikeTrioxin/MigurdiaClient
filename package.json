@@ -1,7 +1,7 @@
 {
   "name": "Migurdia",
   "description": "Migurdia is client for database full of images sorted by tags.",
-  "version": "0.6.12",
+  "version": "0.6.15",
   "author": {
     "name": "iLikeTrioxin",
     "email": "iLike135Trioxane@protonmail.com"
@@ -16,11 +16,11 @@
     "@yaireo/tagify": "^4.9.2",
     "electron-log": "^4.4.1",
     "electron-updater": "^4.6.1",
-    "imagesloaded": "^4.1.4",
+    "jimp": "^0.16.1",
     "masonry-layout": "^4.2.2",
     "node-fetch": "^2.6.1",
     "plupload": "^2.3.7",
-    "sharp": "^0.29.3",
+    "prop-types": "^15.7.2",
     "sjcl": "^1.0.8",
     "tslib": "^2.3.1",
     "video-snapshot": "^1.0.11"
@@ -39,16 +39,32 @@
       }
     ],
     "win": {
-      "target": "nsis",
-      "signAndEditExecutable": false
+      "target": "nsis"
     },
     "linux": {
       "category": "Graphics",
       "target": [
-        "AppImage",
-        "apk",
-        "pacman",
-        "deb"
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        },
+        {
+          "target": "pacman",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        }
       ]
     }
   }

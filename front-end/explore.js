@@ -1,19 +1,13 @@
-const {ipcRenderer} = require('electron');
-const imagesLoaded  = require('imagesloaded');
-const Masonry       = require('masonry-layout');
+const Masonry = require('masonry-layout');
 
 'use strict';
 
-var masonryGallery = new Masonry(
-    '.gallery',
-    {
-        itemSelector: '.gallery-item',
-        fitWidth    : true,
-        gutter      : 10
-    }
-);
-
-var elem = document.getElementById('gallery');
+var gallery = document.getElementById('gallery');
+var masonryGallery = new Masonry( gallery, {
+    itemSelector: '.gallery-item',
+    fitWidth    : true,
+    gutter      : 10
+});
 
 function addImage(src){
     let image = document.createElement("img");
@@ -24,7 +18,7 @@ function addImage(src){
     item.classList.add("gallery-item");
     item.appendChild(image);
 
-    elem.appendChild(item);
+    gallery.appendChild(item);
     masonryGallery.appended(item);
     //item.addEventListener('click', function(){
     //    
@@ -32,28 +26,19 @@ function addImage(src){
     return image;
 }
 
-function scrolledUp(){
-    document.getElementById('menuBar').style.top = "25px";
-}
-
-function scrolledDown(){
-    document.getElementById('menuBar').style.top = "-50px";
-    document.getElementById('userMenu').classList.add('hide');
-}
-
-let seenPosts = [];
-let loading = false;
+var __postsLoading__ = false;
+var __seenPosts__    = [];
 async function scrolledToTheBottom(first=false) {
-	if(loading) return;
+	if(__postsLoading__) return;
 	
-	loading = true;
+	__postsLoading__ = true;
 	let promises = [];
 
     getPosts(first ? 15 : 30).then( (files) => {
         files.forEach( (file ) => {
-            if(seenPosts.includes(file['id'])) return;
+            if(__seenPosts__.includes(file['id'])) return;
             
-            seenPosts.push(file['id']);
+            __seenPosts__.push(file['id']);
             
             promises.push(
                 getRealSource( (file['thumbnailHosting'] ?? "") + file['thumbnailPath'] )
@@ -66,24 +51,33 @@ async function scrolledToTheBottom(first=false) {
         });
     });
 
-    Promise.all(promises).then(() => { loading = false; });
+    Promise.all(promises).then(() => { __postsLoading__ = false; });
 }
 
-var previousYPos = (window.innerHeight + window.scrollY);
+scrolledToTheBottom(true);
+
+function scrolledUp(){
+    document.getElementById('menuBar').style.top = "25px";
+}
+
+function scrolledDown(){
+    document.getElementById('menuBar').style.top = "-50px";
+    document.getElementById('userMenu').classList.add('hide');
+}
+
+var previousYPos;
 function scrollCallback(event){
     let yPos = (window.innerHeight + window.scrollY);
     
-    // check if
-    if (previousYPos < yPos)
-        scrolledDown();
-    else
-        scrolledUp();
+    // reason for using else if is that first run of this function won't run any of those
+    // with previousYPos being undefined while if else will run else in this case
+    if      (previousYPos < yPos) scrolledDown();
+    else if (previousYPos > yPos) scrolledUp  ();
     
     previousYPos = yPos;
     
     if (yPos > document.body.scrollHeight * 0.85) scrolledToTheBottom();
 }
-
 
 var callbacks = [];
 function clickCallback(event){
@@ -98,18 +92,18 @@ document.getElementById('userIcon'      ).addEventListener('click', function(eve
     document.getElementById('userMenu').classList.toggle('hide');
 });
 
-callbacks.push(
-    {
-        target   : document.getElementById('userMenu'),
-        exception: document.getElementById('userIcon'),
-        callback : () => {
-            document.getElementById('userMenu').classList.add('hide');
-        }
-    }
-);
+callbacks.push({
+    target   :         document.getElementById('userMenu'),
+    exception:         document.getElementById('userIcon'),
+    callback : () => { document.getElementById('userMenu').classList.add('hide'); }
+});
 
 window.addEventListener('click' ,  clickCallback);
 window.addEventListener('scroll', scrollCallback);
+
+// Update checking is loaded last to not slow down initial post loading
+
+const {ipcRenderer} = require('electron');
 
 document.getElementById('updateAvaiable').addEventListener('click', () => {
     window.removeEventListener('scroll', scrollCallback);
@@ -126,8 +120,6 @@ document.getElementById('updateAvaiable').addEventListener('click', () => {
 
     askUser("Update", "Do you want to update?", yes, no);
 });
-
-scrolledToTheBottom(true);
 
 ipcRenderer.on('update-downloaded', (event, info) => {
     removeProgressWindow();

@@ -1,7 +1,6 @@
-
 .clickable:hover  { cursor: pointer; }
 
-.gallery          { top   : 4rem ; margin       : auto; }
+#gallery          { top   : 4rem ; margin       : auto; }
 .gallery-item     { width : 300px; margin-bottom: 10px; }
 .gallery-item img { width : 100% ; border-radius: 10px; animation: scaleUpReverse 0.2s forwards; display: block; }
 .gallery-item img:hover                               { animation: scaleUp        0.2s forwards; }
