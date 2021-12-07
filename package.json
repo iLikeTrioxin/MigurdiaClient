@@ -1,10 +1,18 @@
 {
   "name": "Migurdia",
   "description": "Migurdia is client for database full of images sorted by tags.",
+  "keywords": ["migurdia", "image", "explorer"],
+  "homepage": "https://github.com/iLikeTrioxin/MigurdiaClient#readme",
+  "bugs": "https://github.com/iLikeTrioxin/MigurdiaClient/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iLikeTrioxin/MigurdiaClient.git"
+  },
   "version": "0.6.15",
   "author": {
     "name": "iLikeTrioxin",
-    "email": "iLike135Trioxane@protonmail.com"
+    "email": "iLike135Trioxane@protonmail.com",
+    "url": "https://yukiteru.xyz/"
   },
   "license": "AGPL-3.0",
   "main": "main.js",
@@ -39,7 +47,15 @@
       }
     ],
     "win": {
-      "target": "nsis"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        }
+      ]
     },
     "linux": {
       "category": "Graphics",
