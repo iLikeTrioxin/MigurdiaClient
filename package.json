@@ -1,7 +1,11 @@
 {
   "name": "Migurdia",
   "description": "Migurdia is client for database full of images sorted by tags.",
-  "keywords": ["migurdia", "image", "explorer"],
+  "keywords": [
+    "migurdia",
+    "image",
+    "explorer"
+  ],
   "homepage": "https://github.com/iLikeTrioxin/MigurdiaClient#readme",
   "bugs": "https://github.com/iLikeTrioxin/MigurdiaClient/issues",
   "repository": {
