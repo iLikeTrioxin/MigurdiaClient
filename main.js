@@ -2,8 +2,13 @@ const { BrowserWindow, app, ipcMain } = require('electron');
 const { autoUpdater                 } = require('electron-updater');
 const   log                           = require('electron-log');
 
-const browserMode = false;
-const   debugMode = true ;
+'use strict';
+
+app.disableHardwareAcceleration();
+app.commandLine.appendSwitch("disable-software-rasterizer");
+app.commandLine.hasSwitch('disable-gpu')
+
+const debugMode = process.argv.includes('--debug') || process.argv.includes('-d');
 
 autoUpdater.autoDownload = false;
 autoUpdater.logger       = log;
@@ -15,12 +20,12 @@ var mainWindow;
 function createWindow() {
     // Create the browser window.
     mainWindow = new BrowserWindow({
-        width: 400 + (debugMode ? 400 : 0),
-        height: 500,
+        width: 1000 + (debugMode ? 400 : 0),
+        height: 600,
         icon: 'front-end/resources/roxy.png',
         backgroundColor: '#2c3338',
         webPreferences: {
-            nodeIntegration: !browserMode,
+            nodeIntegration : true,
             contextIsolation: false
         },
         frame: false
@@ -40,28 +45,19 @@ autoUpdater.setFeedURL({
     repo    : "MigurdiaClient"
 });
 
-autoUpdater.on('update-not-available', (info) => { log.info("up-to-date"         ); });
-autoUpdater.on('checking-for-update' , (    ) => { log.info("checking-for-update"); });
+function sendToRenderer(channel, args) {
+    log.info(`Message sent to renderer on channel '${channel}' args: ${args}`);
+    //log.info(args);
 
-autoUpdater.on('error', (err) => {
-    log.info("error have occured");
-    mainWindow.webContents.send('update-error', err);
-});
+    mainWindow.webContents.send(channel, args);
+}
 
-autoUpdater.on('update-available', (info) => {
-    log.info("update available");
-    mainWindow.webContents.send('update-available', info);
-});
-
-autoUpdater.on('download-progress', (progressObj) => {
-    log.info("download progress");
-    mainWindow.webContents.send('download-progress', progressObj);
-});
-
-autoUpdater.on('update-downloaded', (info) => {
-    log.info("update downloaded");
-    mainWindow.webContents.send('update-downloaded', info);
-});
+autoUpdater.on('update-not-available', (info) => { sendToRenderer("update-not-available", info); });
+autoUpdater.on('checking-for-update' , (    ) => { sendToRenderer("checking-for-update" , null); });
+autoUpdater.on('download-progress'   , (info) => { sendToRenderer('download-progress'   , info); });
+autoUpdater.on('update-downloaded'   , (info) => { sendToRenderer('update-downloaded'   , info); });
+autoUpdater.on('update-available'    , (info) => { sendToRenderer('update-available'    , info); });
+autoUpdater.on('error'               , (info) => { sendToRenderer('update-error'        , info); });
 
 ipcMain.on('update-quitAndInstall', (event) => {
     autoUpdater.quitAndInstall(true, true);
@@ -76,7 +72,6 @@ ipcMain.on('update-download', (event) => {
 });
 
 ipcMain.on('check', (event) => {
-    log.info("check requested");
     autoUpdater.checkForUpdatesAndNotify();
 
     event.returnValue = null;
@@ -90,10 +85,10 @@ ipcMain.on('setWindowPosition', (event, args) => {
 
 app.whenReady().then(createWindow);
 
-app.on('window-all-closed', function () {
+app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
 });
 
-app.on('activate', function () {
+app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });

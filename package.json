@@ -1,7 +1,7 @@
 {
   "name": "Migurdia",
   "description": "Migurdia is client for database full of images sorted by tags.",
-  "version": "0.6.4",
+  "version": "0.6.12",
   "author": {
     "name": "iLikeTrioxin",
     "email": "iLike135Trioxane@protonmail.com"
@@ -39,11 +39,17 @@
       }
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "signAndEditExecutable": false
     },
     "linux": {
       "category": "Graphics",
-      "target": "AppImage"
+      "target": [
+        "AppImage",
+        "apk",
+        "pacman",
+        "deb"
+      ]
     }
   }
 }

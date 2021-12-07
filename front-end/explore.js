@@ -2,7 +2,7 @@ const {ipcRenderer} = require('electron');
 const imagesLoaded  = require('imagesloaded');
 const Masonry       = require('masonry-layout');
 
-//'use strict';
+'use strict';
 
 var masonryGallery = new Masonry(
     '.gallery',
@@ -59,7 +59,7 @@ async function scrolledToTheBottom(first=false) {
                 getRealSource( (file['thumbnailHosting'] ?? "") + file['thumbnailPath'] )
                 .then( src => {
                     return new Promise( (r) => {
-                        addImage(src).addEventListener('load', () => { masonryGallery.layout(); r(); })
+                        addImage(src).addEventListener('load', () => { masonryGallery.layout(); r(); });
                     });
                 })
             );
@@ -81,14 +81,13 @@ function scrollCallback(event){
     
     previousYPos = yPos;
     
-    //
     if (yPos > document.body.scrollHeight * 0.85) scrolledToTheBottom();
 }
 
 
 var callbacks = [];
 function clickCallback(event){
-    callbacks.forEach(function(element){
+    callbacks.forEach( (element) => {
         if(element.target != event.target && element.exception != event.target) (element.callback)();
     });
 }
@@ -112,33 +111,7 @@ callbacks.push(
 window.addEventListener('click' ,  clickCallback);
 window.addEventListener('scroll', scrollCallback);
 
-function cancelUpdate(){
-    unlockScreen();
-    unlockScroll();
-    
-    window.addEventListener('scroll', scrollCallback);
-    
-    document.getElementById('updateWindow'  ).classList.add   ('hide');
-    document.getElementById('updateAvaiable').classList.remove('hide');
-}
-
-function confirmUpdate(){
-    document.getElementById('askForUpdate').classList.add   ('hide');
-    document.getElementById('installer'   ).classList.remove('hide');
-    move();
-}
-
-function updatePopup(){
-    lockScreen();
-    lockScroll();
-
-    window.removeEventListener('scroll', scrollCallback);
-
-    document.getElementById('updateWindow'  ).classList.remove('hide');
-    document.getElementById('updateAvaiable').classList.add   ('hide');
-}
-
-document.getElementById('updateAvaiable').addEventListener('click', () =>{
+document.getElementById('updateAvaiable').addEventListener('click', () => {
     window.removeEventListener('scroll', scrollCallback);
     
     function yes() {
@@ -180,30 +153,3 @@ ipcRenderer.on('update-available', () => {
 });
 
 ipcRenderer.sendSync('check');
-
-document.getElementById('closeButton').addEventListener('click', () => {
-    window.close();
-})
-
-var __CW_DELTA_X__ = 0;
-var __CW_DELTA_Y__ = 0;
-var toolBarHold = false;
-document.getElementById('toolBar').addEventListener('mousemove', (event) => {
-    if(!toolBarHold) return;
-    
-    ipcRenderer.sendSync('setWindowPosition', [
-        event.screenX - __CW_DELTA_X__,
-        event.screenY - __CW_DELTA_Y__
-    ]);
-});
-
-document.getElementById('toolBar').addEventListener('mousedown', (event) => {
-    __CW_DELTA_X__ = event.screenX - window.screenX;
-    __CW_DELTA_Y__ = event.screenY - window.screenY;
-
-    toolBarHold = true;
-});
-
-document.getElementById('toolBar').addEventListener('mouseup', () => {
-    toolBarHold = false;
-});

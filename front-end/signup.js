@@ -1,5 +1,7 @@
 const sjcl = require('sjcl');
 
+'use strict';
+
 function onSubmit(event){
 	let usernameField = document.getElementById("login__username");
 	let    emailField = document.getElementById("login__email"   );
