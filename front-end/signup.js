@@ -17,7 +17,7 @@ function onSubmit(event){
 
 	// Hash password for seciurity
 	password = sjcl.hash.sha256.hash(password);
-	
+
 	signup(username, email, password).then( (res) => {
 		switch( (res === false) ? -1 : res['exitCode'] ){
 			case 0:
@@ -39,7 +39,7 @@ function onSubmit(event){
 				break;
 		}
 	});
-	
+
 	return false;
 }
 
