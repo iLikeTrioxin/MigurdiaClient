@@ -8,7 +8,7 @@ var mainWindow;
 function createWindow() {
     // Create the browser window.
     mainWindow = new BrowserWindow({
-        width: 1000 + (debugMode ? 400 : 0),
+        width : 1000 + (debugMode ? 400 : 0),
         height: 600,
         icon: 'front-end/resources/roxy.png',
         backgroundColor: '#2c3338',
@@ -65,13 +65,13 @@ if (debugMode)
 
 autoUpdater.autoDownload = false;
 autoUpdater.setFeedURL({
-    provider: "github",
-    owner   : "iLikeTrioxin",
-    repo    : "MigurdiaClient"
+    provider: 'github',
+    owner   : 'iLikeTrioxin',
+    repo    : 'MigurdiaClient'
 });
 
-autoUpdater.on('update-not-available', (info) => { sendToRenderer("update-not-available", info); });
-autoUpdater.on('checking-for-update' , (    ) => { sendToRenderer("checking-for-update" , null); });
+autoUpdater.on('update-not-available', (info) => { sendToRenderer('update-not-available', info); });
+autoUpdater.on('checking-for-update' , (    ) => { sendToRenderer('checking-for-update' , null); });
 autoUpdater.on('download-progress'   , (info) => { sendToRenderer('download-progress'   , info); });
 autoUpdater.on('update-downloaded'   , (info) => { sendToRenderer('update-downloaded'   , info); });
 autoUpdater.on('update-available'    , (info) => { sendToRenderer('update-available'    , info); });

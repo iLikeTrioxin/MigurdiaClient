@@ -10,12 +10,12 @@ var masonryGallery = new Masonry( gallery, {
 });
 
 function addImage(src){
-    let image = document.createElement("img");
-    image.setAttribute("src", src);
-    image.setAttribute("alt", "Image");
+    let image = document.createElement('img');
+    image.setAttribute('src', src);
+    image.setAttribute('alt', 'Image');
     
-    let item = document.createElement("div");
-    item.classList.add("gallery-item");
+    let item = document.createElement('div');
+    item.classList.add('gallery-item');
     item.appendChild(image);
 
     gallery.appendChild(item);
@@ -41,7 +41,7 @@ async function scrolledToTheBottom(first=false) {
             __seenPosts__.push(file['id']);
             
             promises.push(
-                getRealSource( (file['thumbnailHosting'] ?? "") + file['thumbnailPath'] )
+                getRealSource( (file['thumbnailHosting'] ?? '') + file['thumbnailPath'] )
                 .then( src => {
                     return new Promise( (r) => {
                         addImage(src).addEventListener('load', () => { masonryGallery.layout(); r(); });
@@ -57,11 +57,11 @@ async function scrolledToTheBottom(first=false) {
 scrolledToTheBottom(true);
 
 function scrolledUp(){
-    document.getElementById('menuBar').style.top = "25px";
+    document.getElementById('menuBar').style.top = '25px';
 }
 
 function scrolledDown(){
-    document.getElementById('menuBar').style.top = "-50px";
+    document.getElementById('menuBar').style.top = '-50px';
     document.getElementById('userMenu').classList.add('hide');
 }
 
@@ -118,14 +118,14 @@ document.getElementById('updateAvaiable').addEventListener('click', () => {
         window.addEventListener('scroll', scrollCallback);
     }
 
-    askUser("Update", "Do you want to update?", yes, no);
+    askUser('Update', 'Do you want to update?', yes, no);
 });
 
 ipcRenderer.on('update-downloaded', (event, info) => {
     removeProgressWindow();
     
     askUser(
-        "Update downloaded", "restart is required<br/>Do you want to restart now?",
+        'Update downloaded', 'restart is required<br/>Do you want to restart now?',
         () => { ipcRenderer.sendSync('update-quitAndInstall');                   },
         () => { document.getElementById('updateAvaiable').classList.add('hide'); }
     );
@@ -137,7 +137,7 @@ ipcRenderer.on('download-progress', (progressObject) => {
 
 ipcRenderer.on('update-error', function(err) {
     removeProgressWindow();
-    error("An error occurred during update. Try later.", 3000);
+    error('An error occurred during update. Try later.', 3000);
 });
 
 ipcRenderer.on('update-available', () => {
