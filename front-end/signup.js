@@ -18,6 +18,8 @@ function onSubmit(event){
 	// Hash password for seciurity
 	password = sjcl.hash.sha256.hash(password);
 
+    password = intsToString(password);
+    
 	signup(username, email, password).then( (res) => {
 		switch( (res === false) ? -1 : res['exitCode'] ){
 			case 0:

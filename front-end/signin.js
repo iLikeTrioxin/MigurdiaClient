@@ -16,6 +16,8 @@ function onSubmit(){
 	// Hash password for seciurity
 	password = sjcl.hash.sha256.hash(password);
 
+    password = intsToString(password);
+
 	signin(username, password).then((response)=>{
 		switch( (response === false) ? -1 : response['exitCode'] ){
 			case 0:

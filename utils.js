@@ -3,6 +3,15 @@ const apiURL = 'https://migurdia.yukiteru.xyz/API.php?';
 
 'use strict';
 
+function intsToString(ints){
+    let result = "";
+
+    for(let i = 0; i < ints.length; i++)
+        result += (ints[i] >>> 0).toString(16);
+
+    return result;
+}
+
 function addTitleBar(){
     let titleBar = document.createElement('div');
     titleBar.style = 'z-index:11;position:fixed;top:0;width:100vw;height:25px;background-color:#20272c;';
@@ -10,24 +19,24 @@ function addTitleBar(){
     let titleBarStyle = document.createElement('style');
     //titleBarStyle.type = 'text/css';
     titleBarStyle.appendChild(document.createTextNode('#closeButton{position:absolute;right:0;top:0;z-index:12;float:right;border-radius:100%;width:13px;height:13px;margin:6px;background-color:rgb(100,35,35);}#closeButton:hover{background-color:rgb(200,70,70);}'));
-    
+
     let closeButton = document.createElement('div');
     closeButton.addEventListener('click', () => { window.close(); });
     closeButton.id = 'closeButton';
-    
+
     let dragBar = document.createElement('div');
     dragBar.style = 'position:absolute;width:100%;height:100%;right:25px;user-select:none;-webkit-user-select:none;-webkit-app-region:drag;';
 
     titleBar.append(titleBarStyle, dragBar, closeButton);
-    
+
     document.querySelector('html').appendChild(titleBar);
 }
 
 addTitleBar();
 
-//-------------------
-//  Pixiv handling 
-//-------------------
+//-------------------\
+//  Pixiv handling   |
+//-------------------/
 
 // A lot of posts are sourced from pixiv, and so it happens
 // pixiv do not allow you to freely embed their images on your site
@@ -85,15 +94,15 @@ async function callAPIAS(data, retry=true){
 
 function error(msg, ms){
 	let errorMsg = document.getElementById('errorMessage');
-	
+
 	if (errorMsg == null){
 		errorMsg = document.createElement('div');
-		
+
 		errorMsg.id = 'errorMessage';
-		
+
 		errorMsg.classList.add('error');
 		errorMsg.classList.add('hide' );
-		
+
 		document.body.appendChild(errorMsg);
 	}
 
@@ -106,7 +115,7 @@ function error(msg, ms){
 function post(url, data){
 	let xhr = new window.XMLHttpRequest;
 	xhr.open('POST', url, false);
-	
+
 	//Send the proper header information along with the request
 	xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
 	//xhr.onreadystatechange = callback;
@@ -116,12 +125,12 @@ function post(url, data){
 	//		alert(xhr.responseText);
 	//	}
 	//}
-	
+
 	xhr.send(data);
-	
+
 	if(xhr.readyState != 4 && xhr.status != 200)
 		return xhr.status;
-	
+
 	return xhr.responseText;
 }
 
@@ -144,7 +153,7 @@ async function signup(username, email, password){
 async function signin(username=null, password=null){
 	if(username == null || password == null){
 		if(!localStorage['username'] || !localStorage['password']) return new Promise( (r) => r(false) );
-		
+
 		username = localStorage['username'];
 		password = localStorage['password'];
 	}
@@ -196,7 +205,7 @@ function lockScreen(){
 
 function unlockScreen(){
     let lock = document.getElementById('__lockScreen__');
-    
+
     if(lock != undefined) lock.remove();
 }
 
@@ -233,7 +242,7 @@ function addProgressWindow(title, stage) {
     windowStage.style     = 'margin-top:10%;font-size:1rem;margin-bottom:10%;position:relative;color:rgb(255,255,255);font-weight:bold;text-transform:uppercase;';
     windowStage.id        = '__currentStage__';
     windowStage.innerHTML = stage;
-    
+
     let progress = document.createElement('div');
     progress.style = 'width:80%;margin:0 auto;background-color:grey;';
     progress.id    = '__currentProgress__';
@@ -277,7 +286,7 @@ function askUser(title, question, yesCallback, noCallback){
     let noButton = document.createElement('a');
     noButton.style     = 'cursor:pointer;margin:5%;padding:2% 5%;border:2px solid white;border-radius:5px;position:relative;color:rgb(255,255,255);font-weight:bold;text-transform:uppercase;';
     noButton.innerHTML = 'No';
-    
+
     noButton.addEventListener('click', ()  => { unlockScreen(); unlockScroll(); document.getElementById('__currentQuestion__').remove(); });
     noButton.addEventListener('click', noCallback);
 
@@ -295,12 +304,12 @@ async function getPosts(amount=20, wantedTags=[], unwantedTags=[], offset=0){
 
     if ( unwantedTags != [] ) tags['unwanted'] = unwantedTags;
     if (   wantedTags != [] ) tags[  'wanted'] =   wantedTags;
-    
+
     let data = JSON.stringify(tags);
 console.log(`method=getPosts&tags=${data}&amount=${amount}&offset=${offset}`);
     return callAPIAS(`method=getPosts&tags=${data}&amount=${amount}&offset=${offset}`).then( (res) =>{
         if( res['exitCode'] == 0 ) return res['result'];
-        
+
         return false;
     });
 }
